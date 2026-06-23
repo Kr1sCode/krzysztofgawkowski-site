@@ -1,10 +1,9 @@
 // Cloudflare Worker — CV RAG Proxy
 // 1. Deploy na dash.cloudflare.com -> Workers & Pages -> Create Worker
 // 2. Settings -> Variables and Secrets -> dodaj OPENAI_API_KEY (Encrypt)
-// 3. Podmień ALLOWED_ORIGIN na swoja domene
+// 3. ALLOWED_ORIGIN — domena portfolio (produkcja poniżej)
 
-// Ustaw domenę portfolio po deployu — patrz README.md
-const ALLOWED_ORIGIN = "https://YOUR_DOMAIN.example";
+const ALLOWED_ORIGIN = "https://www.krzysztofgawkowski.pl";
 
 const CV_DATA = `Krzysztof Gawkowski — Administrator IT / IT Infrastructure Engineer
 
@@ -45,6 +44,49 @@ DOŚWIADCZENIE ZAWODOWE:
 4. Główny Informatyk / Starszy Informatyk — sektor publiczny, Warszawa (11.2021 — 05.2023)
    - Trzy stanowiska awansem: Starszy Informatyk → Administrator Techniczny Systemów (SZBI ISO 27001) → Główny Informatyk
    - Hardening serwerów, usuwanie podatności EOS, zarządzanie ciągłością działania sieci i systemów
+
+   Lista rzeczy które zrobiłem w sektorze publicznym :
+
+- wsparcie dla prac polegających na migracji fizycznego zewnętrznego serwera DNS do NASK SA wraz z wdrożeniem usługi DNSSEC
+
+- optymalizacja całego fizycznego środowiska przez usuwanie zbędnego sprzętu na rzecz nowego
+
+- bieżące wykrywanie podatności i usuwanie ich po przez aktualizację oprogramowania (firmware) lub konfigurację reguł na urządzeniach brzegowych w oparciu o NIST
+
+- zarządzanie ciągłością działania
+
+- zarządzanie systemami i sieciami
+
+- bezpośredni nadzór nad kolokacją serwerowni od projektu po przez budowę nowego Data Center
+
+- wsparcie przy tworzeniu dokumentacji SYSTEMU ZARZĄDZANIA BEZPIECZEŃSTWEM INFORMACJI zgodnie z IEC/ISO 27001
+
+- wdrażanie procedur zgodnych z SZBI
+
+- wdrożenie menadżera haseł w dziale IT w oparciu o kontener dockera i otwarto źródłowe oprogramowanie
+
+- rozbudowa klastra serwerów DELL w oparciu o vmware ESXI
+
+- wdrożenie nowego VMWARE vCenter Server
+
+- wdrożenie nowego klastra macierzy dyskowych NETAPP oraz QNAP w organizacji
+
+- wdrożenie wirtualnego appliance Eaton Intelligent Power Manager
+
+- wdrożenie VEEAM BACKUP & Replication
+
+- wdrożenie usługi ESET PROTECT w wirtualnym środowisku
+
+- wdrożenie nowego zwirtualizowanego środowiska dla projektu o krajowym zasięgu www.geoserwis.gdos.gov.pl wraz z końcową konfiguracją reguł na FW
+
+- wdrożenie nowej metody toru komunikacji serwera poczty MS Exchange z pominięciem serwera usług aliasów poczty e-mail
+
+- wdrożenie aktualnych certyfikatów dla wszystkich usług opartych na systemach MS Windows i GDU Linux
+
+- wdrożenie systemu do monitorowania ZABBIX
+
+- wsparcie dla prac polegających na migracji scentralizowanej usługi serwera poczty e-mail do NASK SA
+
 
 5. Specjalista ds. Systemów Operacyjnych — Grupa Autoneo Sp. z o.o. (04.2021 — 09.2021)
    - Administracja Linux i Windows Server, wsparcie techniczne, szkolenia wewnętrzne, współpraca z dystrybutorami IT
