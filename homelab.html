@@ -1,0 +1,3527 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Homelab — Infrastruktura | Krzysztof Gawkowski</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-body: "JetBrains Mono", monospace;
+      --font-mono: "JetBrains Mono", monospace;
+      --font-display: "JetBrains Mono", monospace;
+      --font-hero: "Share Tech Mono", monospace;
+      --pw-bg: #0a0c10;
+      --pw-accent: #2dd4bf;
+      --pw-warm: #f97316;
+      --text: #dde3e2;
+      --muted: #7e8c8a;
+      --bg: var(--pw-bg);
+      --border: #16211f;
+      --terminal-bg: #070a0d;
+      --surface: color-mix(in srgb, var(--text) 3%, transparent);
+      --surface-hover: color-mix(in srgb, var(--pw-accent) 6%, transparent);
+      --surface-active: color-mix(in srgb, var(--pw-accent) 12%, transparent);
+      --surface-nav: rgba(45, 212, 191, 0.05);
+      --green: var(--text);
+      --dim-green: var(--muted);
+      --accent: var(--pw-accent);
+      --accent2: var(--pw-warm);
+      --card-bg: var(--surface);
+      --glow: rgba(45, 212, 191, 0.15);
+    }
+    body.amber {
+      --green: #e8c87a;
+      --dim-green: #8a7040;
+      --accent: #f0a830;
+      --accent2: #60c8a0;
+      --border: #2a2010;
+      --glow: rgba(240,168,48,0.15);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--green);
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.75;
+      min-height: 100vh;
+      transition: background-color 0.4s, color 0.4s, border-color 0.4s;
+    }
+    body * { text-shadow: none; }
+
+    /* ── MATRIX CANVAS ── */
+    #matrix-canvas {
+      display: none;
+      position: fixed; top:0; left:0;
+      width:100%; height:100%;
+      z-index: 9999;
+      background: black;
+    }
+    #matrix-canvas.active { display:block; }
+    #matrix-exit {
+      display: none;
+      position: fixed; bottom:20px; left:50%;
+      transform: translateX(-50%);
+      z-index:10000;
+      color: var(--green);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      text-shadow: 0 0 8px var(--glow);
+      cursor: pointer;
+      border: 1px solid var(--green);
+      padding: 0.4rem 1.2rem;
+      background: rgba(0,0,0,0.8);
+    }
+    #matrix-exit.active { display:block; }
+
+    /* ── MAIN ── */
+    #main { display:none; }
+    #main.visible { display:block; }
+    .container { max-width:100%; margin:0 auto; padding:2rem; }
+
+    /* ── HEADER ── */
+    header {
+      border:1px solid var(--border);
+      background: linear-gradient(135deg, rgba(45,212,191,0.04) 0%, rgba(10,12,16,0) 60%);
+      padding:1.5rem 2rem;
+      margin-bottom:2rem;
+      position:relative;
+      box-shadow: inset 0 1px 0 rgba(45,212,191,0.15), 0 4px 24px rgba(0,0,0,0.6);
+    }
+    header::before {
+      content:"CONSOLE";
+      position:absolute; top:-0.65rem; left:1rem;
+      background:var(--bg); padding:0 0.8rem;
+      font-family: var(--font-mono);
+      font-size:0.8rem; color:var(--accent);
+      font-weight:bold; letter-spacing:2px;
+    }
+    .prompt-line { color:var(--accent); font-family: var(--font-mono); font-size:0.85rem; margin-bottom:0.5rem; opacity:0.9; }
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      letter-spacing: -0.03em;
+      font-weight: 700;
+    }
+    h1 {
+      font-size: 1.75rem;
+      color: #ffffff;
+      margin-bottom: 0.35rem;
+    }
+    #header-name {
+      font-family: var(--font-hero);
+      font-weight: normal;
+      letter-spacing: 3px;
+    }
+    .tagline { font-family: var(--font-body); color:#7a8494; font-size:0.84rem; letter-spacing:0.5px; flex-wrap:wrap; }
+    .cursor {
+      display:inline-block; width:9px; height:1em;
+      background:var(--accent);
+      animation:blink 1s step-end infinite;
+      vertical-align:text-bottom; margin-left:2px;
+      opacity:0.9;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── NAV ── */
+    nav {
+      display:flex; flex-wrap:nowrap; gap:0;
+      margin-bottom:2rem;
+      border:1px solid var(--border);
+      background: var(--surface-nav);
+      overflow:visible;
+      align-items:stretch;
+    }
+    nav a {
+      color:var(--dim-green); text-decoration:none;
+      padding:0.5rem 1.0rem;
+      border-right:1px solid var(--border);
+      font-family: var(--font-body);
+      font-size:0.82rem; transition:all 0.15s;
+      letter-spacing:0.5px;
+      flex-shrink:0;
+    }
+    nav a:hover {
+      background: var(--surface-active); color:var(--accent); text-shadow:none;
+    }
+    nav a.active {
+      background: color-mix(in srgb, var(--pw-accent) 14%, transparent); color:var(--accent); text-shadow:none;
+      border-bottom: 2px solid var(--accent);
+    }
+    nav a:last-child { border-right:none; }
+
+
+    /* ── SECTIONS ── */
+    .section {
+      border:1px solid var(--border);
+      background: var(--surface);
+      padding:1.5rem 2rem; margin-bottom:2rem;
+      position:relative;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    }
+    .section-label {
+      position:absolute; top:-0.65rem; left:1rem;
+      background:var(--bg); padding:0 0.8rem;
+      font-family: var(--font-mono);
+      font-size:0.75rem; color:var(--accent); letter-spacing:2px; font-weight:bold;
+    }
+    h2 { font-size:0.88rem; font-weight:400; margin-bottom:1.1rem; letter-spacing:0; color:var(--accent); opacity:1; }
+    p, blockquote, [id^="hl-block"], [id^="hl-txt"] {
+      font-family: var(--font-body);
+      font-weight: 400;
+    }
+    p { color:#b8bec8; font-size:0.95rem; line-height:1.75; margin-bottom:0.9rem; }
+    [id^="hl-cat"] { font-family: var(--font-mono); color: var(--accent) !important; }
+    #hl-wrap #hdr h1 {
+      font-family: var(--font-body);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    body.amber p { color:#b8a070; }
+
+    /* ── SKILLS ── */
+    .skill-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+      gap:0.5rem; margin-top:0.5rem;
+    }
+    .skill-item {
+      border:1px solid var(--border);
+      background: var(--surface);
+      padding:0.4rem 0.75rem;
+      font-family: var(--font-body);
+      font-size:0.82rem;
+      display:flex; align-items:center; gap:0.5rem;
+      color: #9ca3af;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .skill-item:hover { border-color: var(--accent); background: var(--surface-hover); color: #c8cdd4; }
+    .skill-item::before { content:">"; color:var(--accent); opacity:0.7; }
+
+    /* ── SERVICES ── */
+    .service-list { list-style:none; margin-top:0.5rem; display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:0 1.5rem; }
+    .service-list li {
+      padding:0.35rem 0; border-bottom:1px solid var(--border);
+      font-size:0.88rem; display:flex; justify-content:space-between; align-items:center;
+    }
+    .service-list li:last-child { border-bottom:none; }
+    .badge {
+      font-size:0.68rem; padding:0.1rem 0.5rem;
+      border:1px solid var(--border); color:var(--dim-green); text-shadow:none;
+      background: var(--surface);
+    }
+    .badge.up { border-color: color-mix(in srgb, var(--pw-accent) 35%, var(--border)); color:var(--pw-accent); background: color-mix(in srgb, var(--pw-accent) 12%, transparent); }
+
+    .uptime-label { margin-top:1rem; font-size:0.75rem; color:var(--dim-green); }
+    .uptime-bar { display:flex; gap:2px; margin-top:0.4rem; }
+    .uptime-block { width:12px; height:18px; background:var(--green); opacity:0.7; }
+    .uptime-block.down { background:#ff3333; }
+
+    /* ── BLOG ── */
+    .post-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:0.75rem; margin-top:0.5rem; }
+    .post-card {
+      border:1px solid var(--border);
+      background: var(--surface);
+      padding:0.9rem 1.2rem;
+      transition:border-color 0.15s, background 0.15s; cursor:pointer;
+    }
+    .post-card:hover { border-color:var(--accent); background: var(--surface-hover); }
+    .post-date { font-family: var(--font-mono); font-size:0.72rem; color:var(--accent); margin-bottom:0.25rem; letter-spacing:0.5px; }
+    .post-title { font-family: var(--font-display); font-size:0.9rem; font-weight:600; }
+
+    /* ── NETWORK MAP ── */
+    #network-map {
+      width:100%; overflow-x:auto;
+      padding-top:0.5rem;
+    }
+    .net-layer {
+      margin-bottom:1.2rem;
+    }
+    .net-layer-title {
+      font-size:0.72rem; color:var(--dim-green); margin-bottom:0.5rem;
+      letter-spacing:1px; border-bottom:1px solid var(--border); padding-bottom:0.25rem;
+    }
+    .net-nodes {
+      display:flex; flex-wrap:wrap; gap:0.5rem;
+    }
+    .net-node {
+      border:1px solid var(--border); padding:0.3rem 0.7rem;
+      font-size:0.78rem; position:relative; cursor:default;
+      transition:border-color 0.2s, background 0.2s;
+      min-width:130px; text-align:center;
+    }
+    .net-node:hover { border-color:var(--green); background:var(--surface-hover); }
+    .net-node .ip { font-size:0.68rem; color:var(--dim-green); display:block; }
+    .net-node.router { border-color:var(--green); }
+    .net-node.storage { border-color:#33aaff; color:#33aaff; text-shadow:0 0 6px rgba(51,170,255,0.5); }
+    body.amber .net-node.storage { border-color:#ff8c00; color:#ff8c00; }
+    .net-node.cloud { border-color:#aa33ff; color:#aa33ff; text-shadow:0 0 6px rgba(170,51,255,0.5); }
+    .net-node.vm { border-color:#ffdd33; color:#ffdd33; text-shadow:0 0 6px rgba(255,221,51,0.5); }
+    .net-node.vlan { border-color:var(--dim-green); font-size:0.72rem; min-width:80px; }
+
+    /* ── TERMINAL ── */
+    #tbox {
+      background:var(--terminal-bg); border:1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      padding:1rem 1.2rem; font-family: var(--font-mono); font-size:0.88rem;
+      min-height:220px; max-height:320px; overflow-y:auto;
+      cursor:text;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+    }
+    #tbox:focus-within {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(45,212,191,0.25);
+    }
+    #tout { white-space:pre-wrap; word-break:break-all; color:#9ca3af; font-size:0.88rem; }
+    #term-output { flex:1; white-space:pre-wrap; word-break:break-all; }
+    .term-input-row {
+      display:flex; align-items:center; gap:0.4rem; margin-top:0.5rem;
+    }
+    .term-prompt { color:var(--accent); white-space:nowrap; }
+    #term-input {
+      background:transparent; border:none; outline:none;
+      color:#e8eaf0; font-family:inherit; font-size:inherit;
+      flex:1; caret-color:var(--accent);
+      min-width:200px;
+    }
+
+    /* ── CONTACT ── */
+    .contact-line {
+      display:flex; align-items:center; gap:1rem;
+      padding:0.5rem 0; font-family:var(--font-body); font-size:0.9rem;
+      border-bottom:1px solid var(--border);
+    }
+    .contact-line:last-child { border-bottom:none; }
+    .contact-label { color:var(--accent); min-width:120px; opacity:0.85; }
+    .contact-line a { color:#9ca3af; text-decoration:none; transition:color 0.15s; }
+    .contact-line a:hover { color:var(--accent); text-decoration:none; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top:1px solid var(--border); padding-top:1rem;
+      font-family:var(--font-body); font-size:0.72rem; color:#3a4050;
+      display:flex; justify-content:space-between;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--dim-green); }
+
+    .vbtn.active { border-color:var(--accent) !important; color:var(--accent) !important; background:var(--surface-active) !important; }
+
+    /* ── HOMELAB DIAGRAM OVERRIDES ── */
+    #hl-wrap {
+      border: 1px solid var(--border);
+      background: var(--terminal-bg);
+      overflow: auto;
+      position: relative;
+      width: 100%;
+    }
+    /* Inject homelab diagram CSS with dark bg override */
+* {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body {
+                min-height: 100%;
+                background: var(--terminal-bg);
+                color: var(--text);
+                font-family: var(--font-body);
+                overflow-x: hidden;
+            }
+
+            /* ── HEADER ── */
+            #hdr {
+                padding: 12px 20px;
+                background: var(--pw-bg);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+            #hdr h1 {
+                font-size: 15px;
+                font-weight: 700;
+                color: #e6edf3;
+                letter-spacing: 0.03em;
+            }
+            #scale-label {
+                font-size: 11px;
+                color: #4a5568;
+                margin-left: auto;
+            }
+
+            /* ── VIEW SWITCHER ── */
+            #switcher {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                margin-left: 16px;
+            }
+            .sw-btn {
+                padding: 5px 13px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.04em;
+                cursor: pointer;
+                border: 1px solid transparent;
+                transition: all 0.18s;
+                text-transform: uppercase;
+            }
+            .sw-btn.active {
+                color: #0d1117;
+            }
+            .sw-btn[data-view="all"] {
+                border-color: #4a5568;
+                color: #8b949e;
+            }
+            .sw-btn[data-view="all"].active {
+                background: #4a5568;
+                color: #fff;
+            }
+            .sw-btn[data-view="routing"] {
+                border-color: #7870d8;
+                color: #9080e8;
+            }
+            .sw-btn[data-view="routing"].active {
+                background: #7870d8;
+                color: #fff;
+            }
+            .sw-btn[data-view="storage"] {
+                border-color: #c07828;
+                color: #e09040;
+            }
+            .sw-btn[data-view="storage"].active {
+                background: #c07828;
+                color: #fff;
+            }
+            .sw-btn[data-view="cloud"] {
+                border-color: #5577cc;
+                color: #6699ee;
+            }
+            .sw-btn[data-view="cloud"].active {
+                background: #4466bb;
+                color: #fff;
+            }
+
+            /* ── WRAP & CANVAS ── */
+            #wrap {
+                width: 100%;
+                overflow-x: hidden;
+                padding: 20px 0 40px;
+                background: var(--terminal-bg);
+            }
+            #canvas {
+                position: relative;
+                margin: 0 auto;
+                transition: height 0.35s ease;
+                min-height: 800px;
+            }
+            svg#lines {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            /* ── NODES ── */
+            .node {
+                position: absolute;
+                z-index: 10;
+                cursor: pointer;
+                transition:
+                    transform 0.15s,
+                    box-shadow 0.15s,
+                    opacity 0.3s;
+            }
+            .node:hover {
+                transform: scale(1.07);
+                z-index: 20;
+            }
+            .node:hover .ni {
+                box-shadow:
+                    0 0 0 2px currentColor,
+                    0 4px 24px rgba(0, 0, 0, 0.6);
+            }
+            .ni {
+                border-radius: 8px;
+                border: 1.5px solid;
+                padding: 9px 15px;
+                text-align: center;
+                white-space: nowrap;
+            }
+            .nl {
+                font-size: 13px;
+                font-weight: 700;
+                line-height: 1.3;
+                letter-spacing: 0.01em;
+            }
+            .ns {
+                font-size: 11px;
+                margin-top: 3px;
+                opacity: 0.65;
+                letter-spacing: 0.01em;
+            }
+
+            /* ── NODE COLORS – mocniejsze, większy kontrast ── */
+            .cgr .ni {
+                background: #1a1c22;
+                border-color: #55596a;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            }
+            .cgr .nl {
+                color: #d0d4de;
+            }
+            .cgr .ns {
+                color: #7a7f8e;
+            }
+
+            .cb .ni {
+                background: #0d2140;
+                border-color: #3a7fcc;
+                box-shadow: inset 0 1px 0 rgba(100, 180, 255, 0.08);
+            }
+            .cb .nl {
+                color: #79bbff;
+            }
+            .cb .ns {
+                color: #4d8fd4;
+            }
+
+            .ct .ni {
+                background: #072e22;
+                border-color: #1f9070;
+                box-shadow: inset 0 1px 0 rgba(40, 200, 140, 0.08);
+            }
+            .ct .nl {
+                color: #4de8b0;
+            }
+            .ct .ns {
+                color: #28b880;
+            }
+
+            .cam .ni {
+                background: #2a1a04;
+                border-color: #c07820;
+                box-shadow: inset 0 1px 0 rgba(220, 160, 40, 0.08);
+            }
+            .cam .nl {
+                color: #ffb840;
+            }
+            .cam .ns {
+                color: #d08028;
+            }
+
+            .cp .ni {
+                background: #1a1448;
+                border-color: #7868e0;
+                box-shadow: inset 0 1px 0 rgba(140, 120, 255, 0.08);
+            }
+            .cp .nl {
+                color: #c0b4ff;
+            }
+            .cp .ns {
+                color: #9080d8;
+            }
+
+            .ccor .ni {
+                background: #2e0e08;
+                border-color: #d04828;
+                box-shadow: inset 0 1px 0 rgba(220, 100, 60, 0.08);
+            }
+            .ccor .nl {
+                color: #ff9070;
+            }
+            .ccor .ns {
+                color: #d06040;
+            }
+
+            .cg .ni {
+                background: #0e2408;
+                border-color: #4a9020;
+                box-shadow: inset 0 1px 0 rgba(100, 200, 40, 0.08);
+            }
+            .cg .nl {
+                color: #88ee44;
+            }
+            .cg .ns {
+                color: #5aaa28;
+            }
+
+            .cpk .ni {
+                background: #28082a;
+                border-color: #c03880;
+                box-shadow: inset 0 1px 0 rgba(220, 80, 180, 0.08);
+            }
+            .cpk .nl {
+                color: #ff88cc;
+            }
+            .cpk .ns {
+                color: #c05090;
+            }
+
+            .cred .ni {
+                background: #2e0808;
+                border-color: #cc2828;
+                box-shadow: inset 0 1px 0 rgba(220, 60, 60, 0.08);
+            }
+            .cred .nl {
+                color: #ff6868;
+            }
+            .cred .ns {
+                color: #cc3838;
+            }
+
+            /* ── LAYER BANDS ── */
+            .la {
+                position: absolute;
+                border-radius: 12px;
+                border: 1.5px dashed;
+                z-index: 0;
+                transition: opacity 0.3s;
+            }
+            .lb {
+                position: absolute;
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 0.12em;
+                z-index: 2;
+                text-transform: uppercase;
+                pointer-events: none;
+                transition: opacity 0.3s;
+                background: transparent;
+                padding: 3px 8px;
+                border-radius: 4px;
+            }
+
+            .la-green {
+                border-color: #1f9060;
+                background: rgba(10, 60, 40, 0.3);
+            }
+            .la-blue {
+                border-color: #2d70c8;
+                background: rgba(15, 40, 90, 0.3);
+            }
+            .la-purple {
+                border-color: #6858d8;
+                background: rgba(40, 32, 100, 0.28);
+            }
+            .la-amber {
+                border-color: #b87018;
+                background: rgba(55, 30, 5, 0.35);
+            }
+            .la-cloud {
+                border-color: #4455bb;
+                background: rgba(20, 25, 80, 0.28);
+            }
+
+            /* ── TOOLTIP ── */
+            #tt {
+                position: fixed;
+                z-index: 99999;
+                background: #111520;
+                border: 1px solid #2a3248;
+                border-radius: 10px;
+                padding: 13px 16px;
+                min-width: 250px;
+                max-width: 340px;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.12s;
+                font-size: 12.5px;
+                display: none;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75);
+            }
+            #tt.show {
+                opacity: 1;
+                display: block;
+            }
+            #tt h4 {
+                font-size: 13px;
+                font-weight: 700;
+                color: #e6edf3;
+                margin-bottom: 8px;
+                padding-bottom: 7px;
+                border-bottom: 1px solid #2a3248;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            #tt h4 .tt-dot {
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            #tt table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            #tt td {
+                padding: 3.5px 0;
+                vertical-align: top;
+                color: #8b949e;
+                font-size: 12px;
+                line-height: 1.55;
+            }
+            #tt td:first-child {
+                font-weight: 600;
+                color: #c9d1d9;
+                padding-right: 14px;
+                white-space: nowrap;
+                width: 44%;
+            }
+            #tt tr:not(:last-child) td {
+                border-bottom: 1px solid rgba(42, 50, 72, 0.5);
+            }
+
+            /* ── LEGEND ── */
+            #legend {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 20px;
+                padding: 12px 20px;
+                font-size: 11.5px;
+                color: #6e7681;
+                background: #0d1117;
+                border-top: 1px solid #1e2430;
+            }
+            .li {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .ld {
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+
+            /* ── DIM inactive nodes in filter view ── */
+            .node.dimmed {
+                opacity: 0.12;
+                pointer-events: none;
+            }
+            .la.dimmed,
+            .lb.dimmed {
+                opacity: 0.06;
+            }
+
+    body > #main > .container > .section {
+      padding: 1.5rem 1rem;
+    }
+    /* Make diagram wrapper scrollable and full width */
+    #hl-wrap {
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+    /* The homelab diagram internal wrapper */
+    #diagram-outer, #diagram-wrap, .diagram-container {
+      min-width: max-content;
+    }
+
+
+    /* ── LANG TOGGLE ── */
+    #lang-toggle {
+        background: transparent;
+        border: none;
+        border-left: 1px solid var(--border);
+        color: var(--dim-green);
+        font-family: var(--font-body);
+        font-size: 0.78rem;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: all 0.15s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    #lang-toggle:hover { color: var(--accent2); background: color-mix(in srgb, var(--pw-warm) 8%, transparent); }
+
+    /* ── LIGHT MODE ── */
+    body.light {
+        --green: #2d3748;
+        --dim-green: #718096;
+        --accent: #0d9488;
+        --accent2: #c04a00;
+        --bg: #f5f7f6;
+        --terminal-bg: #eef2f1;
+        --surface: color-mix(in srgb, #1a202c 3%, transparent);
+        --surface-hover: color-mix(in srgb, #0d9488 8%, transparent);
+        --surface-active: color-mix(in srgb, #0d9488 12%, transparent);
+        --surface-nav: color-mix(in srgb, #0d9488 5%, transparent);
+        --border: #d1d5db;
+        --glow: rgba(13, 148, 136, 0.15);
+        background-color: #f5f7f6;
+        color: #2d3748;
+    }
+    body.light header { background: linear-gradient(135deg, rgba(13,148,136,0.06) 0%, rgba(245,247,246,0) 60%); box-shadow: inset 0 1px 0 rgba(13,148,136,0.2), 0 4px 24px rgba(0,0,0,0.08); }
+    body.light header::before { background: var(--bg); }
+    body.light .section { background: var(--surface); }
+    body.light .section-label { background: var(--bg); }
+    body.light nav { background: var(--surface-nav); }
+    body.light #wrap { background: var(--terminal-bg); }
+    body.light #hl-wrap { background: var(--terminal-bg); border-color: #d1d5db; }
+    body.light p, body.light [style*="color:#9ca3af"], body.light [style*="color: #9ca3af"] { color: #4a5568 !important; }
+    body.light [style*="color:#b8bec8"], body.light [style*="color: #b8bec8"] { color: #4a5568 !important; }
+    body.light [style*="color:#c8cdd4"], body.light [style*="color: #c8cdd4"] { color: #1a202c !important; }
+    body.light .skill-item { color: #374151 !important; background: var(--surface) !important; }
+    body.light .service-list li { color: #374151; }
+    body.light .badge { background: var(--surface); color: #6b7280; }
+    body.light .badge.up { color: var(--accent); background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+    body.light h1 { color: #1a202c; }
+    body.light .tagline { color: #4a5568; }
+    body.light footer { color: #9ca3af; }
+    body { transition: background-color 0.35s, color 0.35s; }
+
+    /* ── THEME TOGGLE BUTTON ── */
+    #theme-toggle {
+        background: transparent;
+        border: none;
+        border-left: 1px solid var(--border);
+        color: var(--dim-green);
+        font-family: var(--font-body);
+        font-size: 0.78rem;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: all 0.15s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+    }
+    #theme-toggle:hover { color: var(--accent); background: var(--surface-hover); }
+
+    /* ── MOBILE RESPONSIVE ──────────────────────────────── */
+
+    /* Tablet ≤ 900px */
+    @media (max-width: 900px) {
+        .container { padding: 1.2rem; }
+        .service-list { grid-template-columns: 1fr; }
+    }
+
+    /* Mobile ≤ 640px */
+    @media (max-width: 640px) {
+        .container { padding: 0.75rem; }
+        header { padding: 1rem; }
+        h1 { font-size: 1.1rem; }
+        #header-name { letter-spacing: 2px; }
+        .tagline { font-size: 0.72rem; }
+
+        /* Nav — horizontal scrollable */
+        nav {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        nav::-webkit-scrollbar { display: none; }
+        nav a { font-size: 0.72rem; padding: 0.5rem 0.6rem; white-space: nowrap; }
+        #clk { display: none !important; }
+        #theme-toggle { padding: 0.5rem 0.6rem; font-size: 0.7rem; }
+        #lang-toggle { padding: 0.5rem 0.6rem; font-size: 0.7rem; }
+
+        /* Sections */
+        .section { padding: 1rem 0.85rem; }
+        h2 { font-size: 0.8rem; }
+
+        /* Grids → single column */
+        .skill-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+        .service-list { grid-template-columns: 1fr; }
+        div[style*="minmax(340px"], div[style*="minmax(380px"], div[style*="minmax(420px"] {
+            grid-template-columns: 1fr !important;
+        }
+
+        /* Topology diagram - scrollable */
+        #hl-wrap { overflow-x: auto !important; }
+        #wrap { overflow-x: auto !important; }
+
+        /* Filter buttons */
+        #switcher { flex-wrap: wrap !important; gap: 0.4rem !important; }
+        #switcher button { font-size: 0.72rem !important; padding: 0.3rem 0.6rem !important; }
+
+        /* Contact / footer */
+        footer { flex-direction: column; gap: 0.4rem; }
+    }
+
+    /* Very small ≤ 380px */
+    @media (max-width: 380px) {
+        h1 { font-size: 0.95rem; }
+        .container { padding: 0.5rem; }
+        nav a { font-size: 0.68rem; padding: 0.4rem 0.5rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+<div id="main" class="visible">
+<div class="container">
+
+  <header>
+    <div class="prompt-line" id="header-prompt">
+      <span id="header-prompt-text"></span><span id="header-prompt-cursor" class="cursor"></span>
+    </div>
+    <h1 id="header-name" style="visibility: hidden">HOMELAB TOPOLOGY<span class="cursor"></span></h1>
+    <div class="tagline" id="header-tagline" style="visibility: hidden">Proxmox VE &nbsp;&middot;&nbsp; VyOS &nbsp;&middot;&nbsp; TrueNAS &nbsp;&middot;&nbsp; WireGuard &nbsp;&middot;&nbsp; Cloudflare &nbsp;&middot;&nbsp; Active Directory</div>
+  </header>
+
+  <nav>
+    <a href="https://krzysztofgawkowski.pl"><span id="nav-back">[&larr; POWRÓT]</span></a>
+    <span id="clk" style="margin-left:auto;padding:0.5rem 1.2rem;font-size:0.82rem;color:var(--accent);border-left:1px solid var(--border);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;"></span>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Przełącz tryb jasny/ciemny"><span id="theme-icon">☀</span><span id="theme-label">LIGHT</span></button>
+    <button id="lang-toggle" onclick="toggleLang()" title="Switch language / Zmień język">[EN]</button>
+  </nav>
+
+
+  <div class="section" style="margin-bottom:1rem;">
+    <span class="section-label" id="hl-readme-label">// README</span>
+    <h2>$ cat /etc/homelab/readme.md</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:1rem; margin-top:0.75rem;">
+
+      <div id="hl-block1" style="color:#b8bec8; font-size:0.88rem; line-height:1.75;">
+        <div id="hl-cat1" style="font-size:0.72rem; letter-spacing:2px; margin-bottom:0.5rem;">O PROJEKCIE</div>
+        <span id="hl-txt1">Homelab to moje prywatne środowisko IT, które buduję i rozwijam w czasie wolnym od kilku lat.
+        Traktuję go jako <span style="color:#c8cdd4;">laboratorium do nauki</span> — tutaj testuję technologie,
+        które później stosuję zawodowo. Każda zmiana jest wdrażana świadomie, dokumentowana i utrzymywana
+        tak jak środowisko produkcyjne.</span>
+      </div>
+
+      <div id="hl-block2" style="color:#b8bec8; font-size:0.88rem; line-height:1.75;">
+        <div id="hl-cat2" style="font-size:0.72rem; letter-spacing:2px; margin-bottom:0.5rem;">ARCHITEKTURA</div>
+        <span id="hl-txt2">Środowisko działa w modelu <span style="color:#c8cdd4;">hybrydowym</span> — część usług uruchomiona
+        lokalnie na sprzęcie fizycznym, część na dedykowanym serwerze OVH (Proxmox VE).
+        Obie lokalizacje połączone są tunelem <span style="color:#c8cdd4;">WireGuard</span>,
+        ruch zarządzany przez router VyOS z segmentacją VLAN i polityką domyślnego DROP.</span>
+      </div>
+
+      <div id="hl-block3" style="color:#b8bec8; font-size:0.88rem; line-height:1.75;">
+        <div id="hl-cat3" style="font-size:0.72rem; letter-spacing:2px; margin-bottom:0.5rem;"><span id="hl-cat3-txt">CO DZIAŁA NA CO DZIEŃ</span></div>
+        <span id="hl-txt3">Nextcloud, AdGuard Home, Nginx Proxy Manager, n8n, Dawarich, UptimeKuma, OpenObserve —
+        wszystkie dostępne przez <span style="color:#c8cdd4;">Cloudflare Tunnel</span> bez otwartych portów WAN.
+        Backup realizowany przez <span style="color:#c8cdd4;">ZFS snapshot replication</span>
+        do fizycznie odizolowanej repliki (air-gap).</span>
+      </div>
+
+      <div id="hl-block4" style="color:#b8bec8; font-size:0.88rem; line-height:1.75;">
+        <div id="hl-cat4" style="font-size:0.72rem; letter-spacing:2px; margin-bottom:0.5rem;">DLA REKRUTERA</div>
+        <span id="hl-txt4">To nie jest pokaz — to działające środowisko, z którego korzystam na co dzień.
+        Pokazuje moje realne podejście do bezpieczeństwa, automatyzacji i utrzymania infrastruktury.
+        Wszystko co widoczne na diagramie poniżej <span style="color:#c8cdd4;">jest uruchomione i monitorowane</span>.</span>
+      </div>
+
+    </div>
+
+    <div style="margin-top:1rem; display:flex; flex-wrap:wrap; gap:0.4rem;">
+      <span class="badge up">Proxmox VE</span>
+      <span class="badge up">VyOS</span>
+      <span class="badge up">WireGuard</span>
+      <span class="badge up">TrueNAS ZFS</span>
+      <span class="badge up">Active Directory</span>
+      <span class="badge up">Cloudflare Tunnel</span>
+      <span class="badge up">AdGuard Home</span>
+      <span class="badge up">Nextcloud</span>
+      <span class="badge up">n8n</span>
+      <span class="badge up">OpenObserve</span>
+      <span class="badge up">Air-gap Backup</span>
+      <span class="badge up">VLAN Segmentation</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="section-label" id="hl-homelab-label">// HOMELAB</span>
+    <h2>$ cat /etc/homelab/topology.conf</h2>
+    <div id="hl-wrap">
+<div id="hdr">
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#4d8fd4"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <rect x="2" y="2" width="20" height="8" rx="2" />
+                <rect x="2" y="14" width="20" height="8" rx="2" />
+                <line x1="6" y1="6" x2="6.01" y2="6" />
+                <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
+            <h1>Homelab Infrastructure</h1>
+
+            <div id="switcher">
+                <button class="sw-btn active" data-view="all">Całość</button>
+                <button class="sw-btn" data-view="routing">Routing</button>
+                <button class="sw-btn" data-view="storage">Storage</button>
+                <button class="sw-btn" data-view="cloud">Cloud</button>
+            </div>
+
+            <span id="scale-label"></span>
+        </div>
+
+        <div id="wrap">
+            <div id="canvas">
+                <svg id="lines" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker
+                            id="arr"
+                            viewBox="0 0 10 10"
+                            refX="8"
+                            refY="5"
+                            markerWidth="5"
+                            markerHeight="5"
+                            orient="auto-start-reverse"
+                        >
+                            <path
+                                d="M2 1L8 5L2 9"
+                                fill="none"
+                                stroke="context-stroke"
+                                stroke-width="1.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </marker>
+                    </defs>
+                </svg>
+
+                <!-- LAYER BANDS -->
+                <div class="la la-green" id="band-0"></div>
+                <div class="lb" id="lbl-0" style="color: #3ab880">
+                    Urządzenia końcowe
+                </div>
+                <div class="la la-blue" id="band-1"></div>
+                <div class="lb" id="lbl-1" style="color: #5a9fe8">
+                    Dostęp · VLAN-y · SSID-y
+                </div>
+                <div class="la la-purple" id="band-2"></div>
+                <div class="lb" id="lbl-2" style="color: #9080e8">
+                    Routing · VyOS · WAN
+                </div>
+                <div class="la la-amber" id="band-3"></div>
+                <div class="lb" id="lbl-3" style="color: #e09040">
+                    Storage · Backup
+                </div>
+                <div class="la la-cloud" id="band-4"></div>
+                <div class="lb" id="lbl-4" style="color: #6688dd">
+                    Cloud · OVH · Proxmox
+                </div>
+
+                <!-- LAYER 0: ENDPOINTS -->
+                <div
+                    class="node cgr"
+                    id="e-phones"
+                    data-tip="phones"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Telefony</div>
+                        <div class="ns">WiFi clients</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-laptops"
+                    data-tip="laptops"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Laptopy / PC</div>
+                        <div class="ns">WiFi + Ethernet</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-cameras"
+                    data-tip="cameras"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Kamery CCTV</div>
+                        <div class="ns">10.20.120.10</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-printers"
+                    data-tip="printers"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Drukarki</div>
+                        <div class="ns">VLAN70</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-iot"
+                    data-tip="iot"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">IoT / Smart</div>
+                        <div class="ns">WiFi 2.4 GHz</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-guests"
+                    data-tip="guests"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Goście</div>
+                        <div class="ns">WiFi VLAN100</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-work"
+                    data-tip="work"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Stacje Praca</div>
+                        <div class="ns">VLAN80 / 110</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="e-cctv"
+                    data-tip="cctv-mon"
+                    data-group="all endpoints"
+                >
+                    <div class="ni">
+                        <div class="nl">Monitor CCTV</div>
+                        <div class="ns">10.20.40.2</div>
+                    </div>
+                </div>
+
+                <!-- LAYER 1: ACCESS -->
+                <div
+                    class="node cb"
+                    id="a-ap1"
+                    data-tip="ap1"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">AP-1</div>
+                        <div class="ns">TP-Link EAP</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="a-ap2"
+                    data-tip="ap2"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">AP-2</div>
+                        <div class="ns">TP-Link EAP</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="s-home"
+                    data-tip="ssid-home"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">SSID Home</div>
+                        <div class="ns">VLAN120</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="s-guest"
+                    data-tip="ssid-guest"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">SSID Guest</div>
+                        <div class="ns">VLAN100</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="s-work"
+                    data-tip="ssid-work"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">SSID Work</div>
+                        <div class="ns">VLAN110</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="s-iot"
+                    data-tip="ssid-iot"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">SSID IoT</div>
+                        <div class="ns">VLAN120</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="a-sw"
+                    data-tip="switch"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">Switch zarządzalny</div>
+                        <div class="ns">VLAN trunk</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-30"
+                    data-tip="vl30"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN30</div>
+                        <div class="ns">NAS .30/24</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-40"
+                    data-tip="vl40"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN40</div>
+                        <div class="ns">CCTV .40/24</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-50"
+                    data-tip="vl50"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN50</div>
+                        <div class="ns">AP Mgmt .50</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-60"
+                    data-tip="vl60"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN60</div>
+                        <div class="ns">Clients .60</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-70"
+                    data-tip="vl70"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN70</div>
+                        <div class="ns">Printers .70</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-80"
+                    data-tip="vl80"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN80</div>
+                        <div class="ns">Work .80</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-90"
+                    data-tip="vl90"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VLAN90</div>
+                        <div class="ns">MGMT .90</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="v-mgmt"
+                    data-tip="vmgmt"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">MGMT-LAN</div>
+                        <div class="ns">10.18.18/24</div>
+                    </div>
+                </div>
+
+                <!-- LAYER 2: VyOS -->
+                <div
+                    class="node cp"
+                    id="r-fw"
+                    data-tip="fw"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">Firewall / NAT</div>
+                        <div class="ns">forward filter</div>
+                    </div>
+                </div>
+                <div
+                    class="node cp"
+                    id="r-vyos"
+                    data-tip="vyos"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">VyOS Router</div>
+                        <div class="ns">m625q · 10.18.18.1</div>
+                    </div>
+                </div>
+                <div
+                    class="node cp"
+                    id="r-wg"
+                    data-tip="wg"
+                    data-group="all routing cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">WireGuard wg0</div>
+                        <div class="ns">10.0.2.1/24</div>
+                    </div>
+                </div>
+                <div
+                    class="node cp"
+                    id="r-dns"
+                    data-tip="dns-vyos"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">DNS Forwarding</div>
+                        <div class="ns">Unbound / cache</div>
+                    </div>
+                </div>
+                <div
+                    class="node cp"
+                    id="r-wan"
+                    data-tip="wan"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">WAN eth1</div>
+                        <div class="ns">192.168.1.10 DHCP</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="r-lte"
+                    data-tip="lte"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">ISP LTE Router</div>
+                        <div class="ns">192.168.1.1 · NAT</div>
+                    </div>
+                </div>
+                <div
+                    class="node cgr"
+                    id="r-inet"
+                    data-tip="internet"
+                    data-group="all routing"
+                >
+                    <div class="ni">
+                        <div class="nl">Internet</div>
+                        <div class="ns">WAN uplink</div>
+                    </div>
+                </div>
+
+                <!-- LAYER 3: STORAGE -->
+                <div
+                    class="node cam"
+                    id="s-nas"
+                    data-tip="truenas"
+                    data-group="all storage"
+                >
+                    <div class="ni">
+                        <div class="nl">TrueNAS Primary</div>
+                        <div class="ns">10.20.30.4 · VLAN30</div>
+                    </div>
+                </div>
+                <div
+                    class="node ccor"
+                    id="s-rep"
+                    data-tip="replica"
+                    data-group="all storage"
+                >
+                    <div class="ni">
+                        <div class="nl">TrueNAS Replica</div>
+                        <div class="ns">Air Gap · ZFS repl.</div>
+                    </div>
+                </div>
+
+                <!-- LAYER 4: CLOUD -->
+                <div
+                    class="node cp"
+                    id="c-tun"
+                    data-tip="tunnel"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">WG Tunnel</div>
+                        <div class="ns">203.0.113.10 OVH</div>
+                    </div>
+                </div>
+                <div
+                    class="node cred"
+                    id="c-efw"
+                    data-tip="ovh-fw"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">OVH Edge Firewall</div>
+                        <div class="ns">10 reguł · 0–9</div>
+                    </div>
+                </div>
+                <div
+                    class="node cp"
+                    id="c-pve"
+                    data-tip="proxmox"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Proxmox VE</div>
+                        <div class="ns">pve-kris-1 · OVH</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="c-ad"
+                    data-tip="ad"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">AD/DC · VM201</div>
+                        <div class="ns">10.19.19.12</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="c-ws"
+                    data-tip="winsrv"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Win Server · VM202</div>
+                        <div class="ns">win-srv</div>
+                    </div>
+                </div>
+                <div
+                    class="node cam"
+                    id="c-tn"
+                    data-tip="truenas-pve"
+                    data-group="all cloud storage"
+                >
+                    <div class="ni">
+                        <div class="nl">TrueNAS · VM101</div>
+                        <div class="ns">storage VM</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="c-adg"
+                    data-tip="adguard"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">AdGuard · LXC104</div>
+                        <div class="ns">10.19.19.19</div>
+                    </div>
+                </div>
+                <div
+                    class="node cb"
+                    id="c-omada"
+                    data-tip="omada"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Omada · LXC109</div>
+                        <div class="ns">10.19.19.20</div>
+                    </div>
+                </div>
+                <div
+                    class="node cg"
+                    id="c-npm"
+                    data-tip="npm"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Nginx Proxy Mgr</div>
+                        <div class="ns">LXC102</div>
+                    </div>
+                </div>
+                <div
+                    class="node cg"
+                    id="c-nc"
+                    data-tip="nextcloud"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Nextcloud · LXC103</div>
+                        <div class="ns">cloud storage</div>
+                    </div>
+                </div>
+                <div
+                    class="node cg"
+                    id="c-uk"
+                    data-tip="uptime"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">UptimeKuma · LXC106</div>
+                        <div class="ns">monitoring</div>
+                    </div>
+                </div>
+                <div
+                    class="node cg"
+                    id="c-daw"
+                    data-tip="dawarich"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Dawarich · LXC105</div>
+                        <div class="ns">geo tracking</div>
+                    </div>
+                </div>
+                <div
+                    class="node cg"
+                    id="c-n8n"
+                    data-tip="n8n"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">n8n · LXC114</div>
+                        <div class="ns">automation</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="c-obs"
+                    data-tip="openobs"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">OpenObserve</div>
+                        <div class="ns">10.19.19.6 · syslog</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="c-bes"
+                    data-tip="beszel"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Beszel · LXC111</div>
+                        <div class="ns">server monitor</div>
+                    </div>
+                </div>
+                <div
+                    class="node ct"
+                    id="c-ts"
+                    data-tip="tailscale"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Tailscale · LXC112</div>
+                        <div class="ns">backup VPN</div>
+                    </div>
+                </div>
+                <div
+                    class="node cpk"
+                    id="c-cf"
+                    data-tip="cloudflared"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">cloudflared</div>
+                        <div class="ns">CF Tunnel agent</div>
+                    </div>
+                </div>
+                <div
+                    class="node cpk"
+                    id="c-www"
+                    data-tip="sites"
+                    data-group="all cloud"
+                >
+                    <div class="ni">
+                        <div class="nl">Strony WWW</div>
+                        <div class="ns">.pl × 3 domeny</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="legend">
+            <div class="li">
+                <div class="ld" style="background: #55596a"></div>
+                Urządzenia końcowe
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #3a7fcc"></div>
+                Dostęp / AP / SSID / Switch
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #1f9070"></div>
+                VLAN
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #7868e0"></div>
+                VyOS / VPN / Routing
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #c07820"></div>
+                TrueNAS Primary
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #d04828"></div>
+                Air Gap Replica
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #cc2828"></div>
+                OVH Edge Firewall
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #4a9020"></div>
+                LXC Services
+            </div>
+            <div class="li">
+                <div class="ld" style="background: #c03880"></div>
+                Cloudflare / WWW
+            </div>
+        </div>
+
+        <div id="tt">
+            <h4>
+                <span class="tt-dot" id="tt-dot"></span><span id="tt-h"></span>
+            </h4>
+            <table id="tt-b"></table>
+        </div>
+
+        <script>
+
+            // ── LANGUAGE SWITCH (HOMELAB) ─────────────────────────────
+            var currentLang = localStorage.getItem('lang') || 'pl';
+
+            var HL_LANG = {
+                pl: {
+                    'nav-back': '[&larr; POWRÓT]',
+                    'hl-readme-label': '// README',
+                    'hl-homelab-label': '// HOMELAB',
+                    'hl-cat1': 'O PROJEKCIE',
+                    'hl-txt1': 'Homelab to moje prywatne środowisko IT, które buduję i rozwijam w czasie wolnym od kilku lat. Traktuję go jako <span style="color:#c8cdd4;">laboratorium do nauki</span> — tutaj testuję technologie, które później stosuję zawodowo. Każda zmiana jest wdrażana świadomie, dokumentowana i utrzymywana tak jak środowisko produkcyjne.',
+                    'hl-cat2': 'ARCHITEKTURA',
+                    'hl-txt2': 'Środowisko działa w modelu <span style="color:#c8cdd4;">hybrydowym</span> — część usług uruchomiona lokalnie na sprzęcie fizycznym, część na dedykowanym serwerze OVH (Proxmox VE). Obie lokalizacje połączone są tunelem <span style="color:#c8cdd4;">WireGuard</span>, ruch zarządzany przez router VyOS z segmentacją VLAN i polityką domyślnego DROP.',
+                    'hl-cat3-txt': 'CO DZIAŁA NA CO DZIEŃ',
+                    'hl-txt3': 'Nextcloud, AdGuard Home, Nginx Proxy Manager, n8n, Dawarich, UptimeKuma, OpenObserve — wszystkie dostępne przez <span style="color:#c8cdd4;">Cloudflare Tunnel</span> bez otwartych portów WAN. Backup realizowany przez <span style="color:#c8cdd4;">ZFS snapshot replication</span> do fizycznie odizolowanej repliki (air-gap).',
+                    'hl-cat4': 'DLA REKRUTERA',
+                    'hl-txt4': 'To nie jest pokaz — to działające środowisko, z którego korzystam na co dzień. Pokazuje moje realne podejście do bezpieczeństwa, automatyzacji i utrzymania infrastruktury. Wszystko co widoczne na diagramie poniżej <span style="color:#c8cdd4;">jest uruchomione i monitorowane</span>.',
+                    'hl-hint': '&gt; Hover na węźle = szczegóły &nbsp;·&nbsp; przyciski filtrują widok &nbsp;·&nbsp; scroll w poziomie jeśli diagram szerszy niż ekran',
+                    'lang-btn': '[EN]',
+                },
+                en: {
+                    'nav-back': '[&larr; BACK]',
+                    'hl-readme-label': '// README',
+                    'hl-homelab-label': '// HOMELAB',
+                    'hl-cat1': 'ABOUT THE PROJECT',
+                    'hl-txt1': 'Homelab is my personal IT environment, which I have been building and developing in my spare time for several years. I treat it as a <span style="color:#c8cdd4;">learning lab</span> — here I test technologies that I later apply professionally. Every change is deployed deliberately, documented and maintained like a production environment.',
+                    'hl-cat2': 'ARCHITECTURE',
+                    'hl-txt2': 'The environment operates in a <span style="color:#c8cdd4;">hybrid model</span> — some services run locally on physical hardware, some on a dedicated OVH server (Proxmox VE). Both locations are connected via a <span style="color:#c8cdd4;">WireGuard</span> tunnel, traffic managed by a VyOS router with VLAN segmentation and default DROP policy.',
+                    'hl-cat3-txt': 'RUNNING DAILY',
+                    'hl-txt3': 'Nextcloud, AdGuard Home, Nginx Proxy Manager, n8n, Dawarich, UptimeKuma, OpenObserve — all accessible via <span style="color:#c8cdd4;">Cloudflare Tunnel</span> with no open WAN ports. Backup performed via <span style="color:#c8cdd4;">ZFS snapshot replication</span> to a physically isolated air-gap replica.',
+                    'hl-cat4': 'FOR RECRUITERS',
+                    'hl-txt4': 'This is not a showcase — it is a live environment I use daily. It demonstrates my real approach to security, automation and infrastructure maintenance. Everything visible on the diagram below <span style="color:#c8cdd4;">is running and monitored</span>.',
+                    'hl-hint': '&gt; Hover over a node for details &nbsp;·&nbsp; buttons filter the view &nbsp;·&nbsp; scroll horizontally if the diagram is wider than the screen',
+                    'lang-btn': '[PL]',
+                }
+            };
+
+            function applyLang(lang) {
+                var d = HL_LANG[lang];
+                if (!d) return;
+                Object.keys(d).forEach(function(id) {
+                    if (id === 'lang-btn') return;
+                    var el = document.getElementById(id);
+                    if (el) el.innerHTML = d[id];
+                });
+                var btn = document.getElementById('lang-toggle');
+                if (btn) btn.textContent = d['lang-btn'];
+                currentLang = lang;
+                localStorage.setItem('lang', lang);
+                document.documentElement.lang = lang;
+            }
+
+            function toggleLang() {
+                applyLang(currentLang === 'pl' ? 'en' : 'pl');
+            }
+
+            // Apply saved lang on load
+            if (currentLang === 'en') {
+                document.addEventListener('DOMContentLoaded', function() { applyLang('en'); });
+            }
+
+            // ── THEME TOGGLE ──────────────────────────────────────────
+            (function() {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'light') {
+                    document.body.classList.add('light');
+                    var icon = document.getElementById('theme-icon');
+                    var label = document.getElementById('theme-label');
+                    if (icon) icon.textContent = '🌙';
+                    if (label) label.textContent = 'DARK';
+                }
+            })();
+
+            function updateThemeBtn(isLight) {
+                var icon = document.getElementById('theme-icon');
+                var label = document.getElementById('theme-label');
+                if (!icon || !label) return;
+                if (isLight) { icon.textContent = '🌙'; label.textContent = 'DARK'; }
+                else { icon.textContent = '☀'; label.textContent = 'LIGHT'; }
+            }
+
+            function toggleTheme() {
+                var isLight = document.body.classList.toggle('light');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                updateThemeBtn(isLight);
+            }
+
+
+            // ═══════════════════════════════════════
+            // TOOLTIP DATA
+            // ═══════════════════════════════════════
+            const D = {
+                phones: {
+                    t: "Telefony",
+                    c: "#55596a",
+                    r: [
+                        ["Sieć", "WiFi 2.4 / 5 GHz"],
+                        ["VLAN", "VLAN120 / VLAN100 (gość)"],
+                        ["DNS", "AdGuard 10.19.19.19"],
+                    ],
+                },
+                laptops: {
+                    t: "Laptopy / PC",
+                    c: "#55596a",
+                    r: [
+                        ["Sieć", "WiFi + Ethernet"],
+                        ["VLAN", "VLAN60 (kabel), VLAN120 (WiFi)"],
+                        ["DNS", "10.19.19.12 (AD) / AdGuard"],
+                    ],
+                },
+                cameras: {
+                    t: "Kamery CCTV",
+                    c: "#55596a",
+                    r: [
+                        ["IP", "10.20.120.10"],
+                        ["VLAN src", "VLAN120"],
+                        ["Stream do", "VLAN40 CCTV (rule 250)"],
+                        ["Protokół", "RTSP"],
+                    ],
+                },
+                printers: {
+                    t: "Drukarki",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN70 · 10.20.70.0/24"],
+                        ["Dostęp", "VLAN60 NetBIOS, VLAN120 SMB 445"],
+                    ],
+                },
+                iot: {
+                    t: "IoT / Smart Home",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN120 · WiFi 2.4 GHz"],
+                        ["Izolacja", "Rule 496 blokuje inter-VLAN"],
+                    ],
+                },
+                guests: {
+                    t: "Sieć gościnowa",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["DNS", "8.8.8.8 (tylko internet)"],
+                        ["Blokada", "Rule 489: brak DNS wewn."],
+                    ],
+                },
+                work: {
+                    t: "Stacje robocze Praca",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN80 (kabel) / VLAN110 (WiFi)"],
+                        ["DNS", "OpenDNS 208.67.222.222"],
+                        ["Blokada", "Rule 495 inter-VLAN drop"],
+                    ],
+                },
+                "cctv-mon": {
+                    t: "Monitor CCTV",
+                    c: "#55596a",
+                    r: [
+                        ["IP", "10.20.40.2"],
+                        ["VLAN", "VLAN40 · 10.20.40.0/24"],
+                        ["Dostęp", "VLAN60 i VLAN120 (rules 240, 300)"],
+                    ],
+                },
+                ap1: {
+                    t: "Access Point 1",
+                    c: "#3a7fcc",
+                    r: [
+                        ["Model", "TP-Link EAP (Omada)"],
+                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["SSID-y", "Home · Guest · Work · IoT"],
+                        ["Controller", "Omada LXC109 @ OVH"],
+                    ],
+                },
+                ap2: {
+                    t: "Access Point 2",
+                    c: "#3a7fcc",
+                    r: [
+                        ["Model", "TP-Link EAP (Omada)"],
+                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["SSID-y", "Home · Guest · Work · IoT"],
+                        ["Uplink", "Switch zarządzalny"],
+                    ],
+                },
+                "ssid-home": {
+                    t: "SSID Home",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN120 · 10.20.120.0/24"],
+                        ["Pasmo", "2.4 GHz + 5 GHz"],
+                        ["DNS", "10.19.19.12 + FamilyShield"],
+                        ["Lease", "14400 s"],
+                    ],
+                },
+                "ssid-guest": {
+                    t: "SSID Guest",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["DNS", "8.8.8.8 (zewnętrzny)"],
+                        ["Izolacja", "Klienci oddzieleni"],
+                    ],
+                },
+                "ssid-work": {
+                    t: "SSID Work WiFi",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN110 · 10.20.110.0/24"],
+                        ["DNS", "10.19.19.19 (AdGuard)"],
+                        ["Pasmo", "5 GHz preferowane"],
+                    ],
+                },
+                "ssid-iot": {
+                    t: "SSID IoT",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN120 · razem z Home"],
+                        ["Pasmo", "2.4 GHz"],
+                        ["Rola", "Smart home, czujniki"],
+                    ],
+                },
+                switch: {
+                    t: "Switch zarządzalny",
+                    c: "#3a7fcc",
+                    r: [
+                        ["Rola", "Trunk VLAN do VyOS eth0"],
+                        ["VLAN trunk", "20,30,40,50,60,70,80,90,100,110,120"],
+                        ["Mgmt", "10.18.18.0/24"],
+                    ],
+                },
+                vl30: {
+                    t: "VLAN30 — NAS",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.30.0/24"],
+                        ["Urządzenia", "TrueNAS 10.20.30.4"],
+                        ["Blokada", "Rule 492 inter-VLAN drop"],
+                    ],
+                },
+                vl40: {
+                    t: "VLAN40 — CCTV",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.40.0/24"],
+                        ["Host", "10.20.40.2"],
+                        ["Blokada", "Rule 493"],
+                    ],
+                },
+                vl50: {
+                    t: "VLAN50 — AP Management",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.50.0/24"],
+                        ["Omada", "10.19.19.20 (rule 330)"],
+                        ["Blokada", "Rule 494"],
+                    ],
+                },
+                vl60: {
+                    t: "VLAN60 — Klienci przewodowi",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.60.0/24"],
+                        ["DNS", "10.19.19.12 (AD DC01)"],
+                        ["Dostęp", "NAS NetBIOS, Printers, CCTV"],
+                    ],
+                },
+                vl70: {
+                    t: "VLAN70 — Drukarki",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.70.0/24"],
+                        ["DNS", "10.19.19.12"],
+                    ],
+                },
+                vl80: {
+                    t: "VLAN80 — Praca kabel",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.80.0/24"],
+                        ["DNS", "OpenDNS 208.67.222.222"],
+                        ["Blokada", "Rule 495"],
+                    ],
+                },
+                vl90: {
+                    t: "VLAN90 — MGMT / Admin",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.90.0/24"],
+                        ["Prawa", "Pełny dostęp (rule 110)"],
+                        ["SSH", "Tylko z VLAN90 (rule 30)"],
+                    ],
+                },
+                vmgmt: {
+                    t: "MGMT-LAN",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.18.18.0/24"],
+                        ["Interfejs", "eth0 VyOS"],
+                        ["Dostęp", "Pełny (rule 100)"],
+                    ],
+                },
+                vyos: {
+                    t: "VyOS Router — m625q",
+                    c: "#7868e0",
+                    r: [
+                        ["LAN", "eth0 · 10.18.18.1/24"],
+                        ["WAN", "eth1 · DHCP 192.168.1.10"],
+                        ["VPN", "WireGuard wg0 · 10.0.2.1/24"],
+                        ["Firewall", "forward filter default DROP"],
+                        ["NAT", "masquerade → eth1"],
+                        ["VLAN", "11 vif (20–120)"],
+                    ],
+                },
+                wg: {
+                    t: "WireGuard VPN",
+                    c: "#7868e0",
+                    r: [
+                        ["Interface", "wg0 · 10.0.2.1/24"],
+                        ["Peer", "pve-new @ 203.0.113.10:51820"],
+                        ["Allowed IPs", "10.0.2.2/32 + 10.19.19.0/24"],
+                        ["Port", "UDP 51820"],
+                        ["Keepalive", "25s"],
+                    ],
+                },
+                fw: {
+                    t: "Firewall / NAT",
+                    c: "#7868e0",
+                    r: [
+                        ["Default", "DROP (forward + input)"],
+                        ["Established", "Accept rule 10"],
+                        ["WAN chain", "OUTSIDE-LOCAL"],
+                        ["NAT", "masquerade 10.20.0.0/16"],
+                        ["Logging", "Włączone"],
+                    ],
+                },
+                wan: {
+                    t: "WAN — eth1",
+                    c: "#7868e0",
+                    r: [
+                        ["Adres", "192.168.1.10/24 (DHCP)"],
+                        ["Upstream", "ISP LTE Router 192.168.1.1"],
+                        ["NAT", "masquerade source"],
+                        ["WireGuard", "UDP 51820 inbound"],
+                    ],
+                },
+                lte: {
+                    t: "ISP LTE Router",
+                    c: "#55596a",
+                    r: [
+                        ["IP LAN", "192.168.1.1"],
+                        ["IP WAN", "Dynamiczne / LTE"],
+                        ["NAT", "Double NAT → VyOS"],
+                        ["Uwaga", "VyOS jest za NAT-em operatora"],
+                    ],
+                },
+                internet: {
+                    t: "Internet / WAN uplink",
+                    c: "#55596a",
+                    r: [
+                        ["Typ", "Łącze LTE"],
+                        ["Trasa", "Internet → LTE Router → VyOS eth1"],
+                        ["WireGuard", "UDP 51820 przez LTE NAT"],
+                    ],
+                },
+                truenas: {
+                    t: "TrueNAS Primary",
+                    c: "#c07820",
+                    r: [
+                        ["IP", "10.20.30.4"],
+                        ["VLAN", "VLAN30"],
+                        ["Usługi", "SMB, NFS, VM Datasets"],
+                        ["Replikacja", "→ TrueNAS Replica ZFS"],
+                        ["Syslog", "→ OpenObserve UDP 514"],
+                    ],
+                },
+                replica: {
+                    t: "TrueNAS Replica — Air Gap",
+                    c: "#d04828",
+                    r: [
+                        ["Rola", "Replication target"],
+                        ["Mechanizm", "ZFS snapshot replication"],
+                        ["Typ", "Fizycznie odseparowany"],
+                        ["Cel", "Disaster recovery"],
+                    ],
+                },
+                tunnel: {
+                    t: "WireGuard Tunnel → OVH",
+                    c: "#7868e0",
+                    r: [
+                        ["Peer", "pve-new · 203.0.113.20"],
+                        ["VyOS", "10.0.2.1"],
+                        ["PVE", "10.0.2.2"],
+                        ["Route", "10.19.19.0/24 via wg0"],
+                    ],
+                },
+                "ovh-fw": {
+                    t: "OVH Edge Firewall",
+                    c: "#cc2828",
+                    r: [
+                        ["P0", "TCP established — Zezwalaj"],
+                        ["P2", "UDP dst:41641 — Tailscale"],
+                        ["P3", "TCP dst:443 — HTTPS"],
+                        ["P5", "ICMP — Zezwalaj"],
+                        ["P7", "UDP dst:51820 — WireGuard"],
+                        ["P9", "IPv4 all — DROP (default)"],
+                    ],
+                },
+                proxmox: {
+                    t: "Proxmox VE — pve-kris-1",
+                    c: "#7868e0",
+                    r: [
+                        ["Lokalizacja", "OVH Dedicated Server"],
+                        ["Dostęp", "WireGuard 10.0.2.2"],
+                        ["VMs", "3 (VM101, VM201, VM202)"],
+                        ["LXCs", "12 kontenerów"],
+                        ["Sieć", "10.19.19.0/24"],
+                    ],
+                },
+                ad: {
+                    t: "Active Directory DC — VM201",
+                    c: "#3a7fcc",
+                    r: [
+                        ["IP", "10.19.19.12"],
+                        ["OS", "Windows Server Core"],
+                        ["Rola", "AD DS, DNS port 53"],
+                        ["DHCP ref", "DNS primary VLAN60, 70, 120"],
+                    ],
+                },
+                winsrv: {
+                    t: "Windows Server — VM202",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VMID", "202"],
+                        ["Nazwa", "win-srv"],
+                        ["Lokalizacja", "Proxmox / OVH"],
+                    ],
+                },
+                "truenas-pve": {
+                    t: "TrueNAS VM — VM101",
+                    c: "#c07820",
+                    r: [
+                        ["VMID", "101"],
+                        ["Rola", "Storage dla PVE"],
+                    ],
+                },
+                adguard: {
+                    t: "AdGuard Home — LXC104",
+                    c: "#3a7fcc",
+                    r: [
+                        ["IP", "10.19.19.19"],
+                        ["Rola", "DNS sinkhole, blokowanie reklam"],
+                        ["Upstream", "1.1.1.1, 8.8.8.8"],
+                        ["Używa go", "Większość VLAN-ów"],
+                    ],
+                },
+                omada: {
+                    t: "Omada Controller — LXC109",
+                    c: "#3a7fcc",
+                    r: [
+                        ["IP", "10.19.19.20"],
+                        ["Rola", "Zarządzanie AP TP-Link"],
+                        ["Dostęp", "VLAN50 → rule 330"],
+                    ],
+                },
+                npm: {
+                    t: "Nginx Proxy Manager — LXC102",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Reverse proxy"],
+                        ["Przyjmuje", "cloudflared tunnel"],
+                        ["TLS", "Cloudflare edge SSL"],
+                    ],
+                },
+                nextcloud: {
+                    t: "Nextcloud — LXC103",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Self-hosted cloud storage"],
+                        ["Proxy", "NPM + cloudflared"],
+                    ],
+                },
+                uptime: {
+                    t: "UptimeKuma — LXC106",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Monitoring dostępności"],
+                        ["Dashboard", "Status page"],
+                    ],
+                },
+                dawarich: {
+                    t: "Dawarich — LXC105",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Historia lokalizacji GPS"],
+                        ["Proxy", "NPM + cloudflared"],
+                    ],
+                },
+                n8n: {
+                    t: "n8n — LXC114",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Automatyzacja workflow"],
+                        ["Proxy", "NPM + cloudflared"],
+                    ],
+                },
+                openobs: {
+                    t: "OpenObserve",
+                    c: "#1f9070",
+                    r: [
+                        ["IP", "10.19.19.6"],
+                        ["Rola", "Log aggregation"],
+                        ["Syslog", "NAS → UDP 514 (rule 261)"],
+                    ],
+                },
+                beszel: {
+                    t: "Beszel — LXC111",
+                    c: "#1f9070",
+                    r: [["Rola", "Lightweight server monitor"]],
+                },
+                tailscale: {
+                    t: "Tailscale — LXC112",
+                    c: "#1f9070",
+                    r: [
+                        ["Rola", "Backup VPN"],
+                        ["Port", "UDP 41641 (OVH FW rule P2)"],
+                    ],
+                },
+                cloudflared: {
+                    t: "cloudflared — CF Tunnel",
+                    c: "#c03880",
+                    r: [
+                        ["Rola", "Tunel Cloudflare → NPM"],
+                        ["Bez portów", "Brak otwartych portów WAN"],
+                        ["Port OVH", "TCP 443 (OVH FW rule P3)"],
+                    ],
+                },
+                sites: {
+                    t: "Strony WWW (3 domeny)",
+                    c: "#c03880",
+                    r: [
+                        ["strona_www_1", "LXC301"],
+                        ["strona_www_2", "LXC303"],
+                        ["strona_www_3", "LXC302"],
+                        ["Stos", "cloudflared → NPM → LXC"],
+                    ],
+                },
+                "dns-vyos": {
+                    t: "DNS Forwarding (VyOS)",
+                    c: "#7868e0",
+                    r: [
+                        ["Cache", "10 000 wpisów"],
+                        [
+                            "Forwarders",
+                            "1.1.1.1, 8.8.8.8, 10.19.19.12, .19.19",
+                        ],
+                        ["Override", "example.dyn-dns.test → 10.19.19.19"],
+                    ],
+                },
+            };
+
+            // ═══════════════════════════════════════
+            // LAYOUT — proporcjonalne pozycje
+            // ═══════════════════════════════════════
+            const BASE_W = 1200;
+            const BASE_H = 1160; // wyższy, większe odstępy między warstwami
+
+            const NODES = [
+                // L0 – Endpoints (y=0.050)
+                ["e-phones", 0.038, 0.05],
+                ["e-laptops", 0.18, 0.05],
+                ["e-cameras", 0.322, 0.05],
+                ["e-printers", 0.464, 0.05],
+                ["e-iot", 0.538, 0.05],
+                ["e-guests", 0.68, 0.05],
+                ["e-work", 0.82, 0.05],
+                ["e-cctv", 0.96, 0.05],
+
+                // L1 – APs (y=0.155)
+                ["a-ap1", 0.09, 0.155],
+                ["a-ap2", 0.255, 0.155],
+                // SSIDs (y=0.220)
+                ["s-home", 0.038, 0.222],
+                ["s-guest", 0.13, 0.222],
+                ["s-work", 0.22, 0.222],
+                ["s-iot", 0.31, 0.222],
+                // Switch (y=0.175)
+                ["a-sw", 0.51, 0.172],
+                // VLANs (y=0.250)
+                ["v-30", 0.395, 0.252],
+                ["v-40", 0.472, 0.252],
+                ["v-50", 0.548, 0.252],
+                ["v-60", 0.624, 0.252],
+                ["v-70", 0.7, 0.252],
+                ["v-80", 0.776, 0.252],
+                ["v-90", 0.852, 0.252],
+                ["v-mgmt", 0.94, 0.252],
+
+                // L2 – VyOS (y=0.362..0.470)
+                ["r-fw", 0.138, 0.365],
+                ["r-vyos", 0.4, 0.355],
+                ["r-wg", 0.64, 0.365],
+                ["r-dns", 0.83, 0.365],
+                ["r-wan", 0.4, 0.438],
+                ["r-lte", 0.4, 0.502],
+                ["r-inet", 0.255, 0.502],
+
+                // L3 – Storage (y=0.610, left)
+                ["s-nas", 0.055, 0.618],
+                ["s-rep", 0.17, 0.618],
+
+                // L4 – Cloud (y=0.610, right)
+                ["c-tun", 0.32, 0.618],
+                ["c-efw", 0.468, 0.618],
+                ["c-pve", 0.66, 0.618],
+
+                // VMs (y=0.705)
+                ["c-ad", 0.32, 0.705],
+                ["c-ws", 0.44, 0.705],
+                ["c-tn", 0.558, 0.705],
+                ["c-adg", 0.7, 0.705],
+                ["c-omada", 0.848, 0.705],
+
+                // LXC row 1 (y=0.793)
+                ["c-npm", 0.32, 0.793],
+                ["c-nc", 0.44, 0.793],
+                ["c-uk", 0.558, 0.793],
+                ["c-daw", 0.7, 0.793],
+                ["c-n8n", 0.848, 0.793],
+
+                // LXC row 2 (y=0.880)
+                ["c-obs", 0.32, 0.88],
+                ["c-bes", 0.44, 0.88],
+                ["c-ts", 0.558, 0.88],
+                ["c-cf", 0.7, 0.88],
+                ["c-www", 0.848, 0.88],
+            ];
+
+            // [bandId, lblId, propX, propY, propW, propH]
+            const BANDS = [
+                ["band-0", "lbl-0", 0.006, 0.008, 0.988, 0.088], // endpoints
+                ["band-1", "lbl-1", 0.006, 0.112, 0.988, 0.172], // access+vlans
+                ["band-2", "lbl-2", 0.006, 0.298, 0.988, 0.248], // routing
+                ["band-3", "lbl-3", 0.006, 0.562, 0.215, 0.186], // storage
+                ["band-4", "lbl-4", 0.232, 0.562, 0.762, 0.4], // cloud
+            ];
+
+            // ═══════════════════════════════════════
+            // VIEW FILTER
+            // ═══════════════════════════════════════
+            const VIEW_GROUPS = {
+                all: null, // pokaż wszystko
+                routing: ["routing", "all"],
+                storage: ["storage", "all"],
+                cloud: ["cloud", "all"],
+            };
+
+            let currentView = "all";
+
+            function applyView(view) {
+                currentView = view;
+                const allowed = VIEW_GROUPS[view];
+
+                document.querySelectorAll(".node").forEach((el) => {
+                    if (!allowed) {
+                        el.classList.remove("dimmed");
+                    } else {
+                        const groups = (el.dataset.group || "").split(" ");
+                        const visible = groups.some((g) => allowed.includes(g));
+                        el.classList.toggle("dimmed", !visible);
+                    }
+                });
+
+                // Bandy
+                const bandMap = {
+                    all: ["band-0", "band-1", "band-2", "band-3", "band-4"],
+                    routing: ["band-0", "band-1", "band-2"],
+                    storage: ["band-3"],
+                    cloud: ["band-4"],
+                };
+                ["band-0", "band-1", "band-2", "band-3", "band-4"].forEach(
+                    (bid, i) => {
+                        const lbl = document.getElementById("lbl-" + i);
+                        const band = document.getElementById(bid);
+                        const vis = !allowed || bandMap[view].includes(bid);
+                        band && band.classList.toggle("dimmed", !vis);
+                        lbl && lbl.classList.toggle("dimmed", !vis);
+                    },
+                );
+
+                drawLines(lastScale);
+            }
+
+            document.querySelectorAll(".sw-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    document
+                        .querySelectorAll(".sw-btn")
+                        .forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    applyView(btn.dataset.view);
+                });
+            });
+
+            // ═══════════════════════════════════════
+            // LAYOUT ENGINE
+            // ═══════════════════════════════════════
+            let lastScale = 1;
+
+            function layout() {
+                const vw = Math.max((document.getElementById("hl-wrap") ? document.getElementById("hl-wrap").clientWidth : window.innerWidth) - 32, 560);
+                const scale = vw / BASE_W;
+                lastScale = scale;
+                const W = Math.round(BASE_W * scale);
+                const H = Math.round(BASE_H * scale);
+
+                const canvas = document.getElementById("canvas");
+                canvas.style.width = W + "px";
+                canvas.style.height = H + "px";
+
+                document.getElementById("scale-label").textContent =
+                    `${W}×${H}px · ${Math.round(scale * 100)}%`;
+
+                NODES.forEach(([id, px, py]) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const ni = el.querySelector(".ni");
+                    const ew = ni ? ni.offsetWidth : 110;
+                    const eh = ni ? ni.offsetHeight : 44;
+                    el.style.left = Math.round(px * W - ew / 2) + "px";
+                    el.style.top = Math.round(py * H - eh / 2) + "px";
+                });
+
+                BANDS.forEach(([bid, lid, px, py, pw, ph], i) => {
+                    const band = document.getElementById(bid);
+                    const lbl = document.getElementById(lid);
+                    if (!band || !lbl) return;
+                    const bx = Math.round(px * W);
+                    const by = Math.round(py * H);
+                    band.style.left = bx + "px";
+                    band.style.top = by + "px";
+                    band.style.width = Math.round(pw * W) + "px";
+                    band.style.height = Math.round(ph * H) + "px";
+                    lbl.style.left = bx + 10 + "px";
+                    lbl.style.top = by + 7 + "px";
+                });
+
+                drawLines(scale);
+            }
+
+            // ═══════════════════════════════════════
+            // DRAW LINES
+            // ═══════════════════════════════════════
+            function ctr(id) {
+                const el = document.getElementById(id);
+                if (!el || el.classList.contains("dimmed")) return null;
+                return {
+                    x: el.offsetLeft + el.offsetWidth / 2,
+                    y: el.offsetTop + el.offsetHeight / 2,
+                    t: el.offsetTop,
+                    b: el.offsetTop + el.offsetHeight,
+                    l: el.offsetLeft,
+                    r: el.offsetLeft + el.offsetWidth,
+                };
+            }
+
+            function addLine(svg, x1, y1, x2, y2, col, dash, w) {
+                const l = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "line",
+                );
+                l.setAttribute("x1", x1);
+                l.setAttribute("y1", y1);
+                l.setAttribute("x2", x2);
+                l.setAttribute("y2", y2);
+                l.setAttribute("stroke", col || "#555");
+                l.setAttribute("stroke-width", w || 1.2);
+                l.setAttribute("opacity", "0.6");
+                if (dash) l.setAttribute("stroke-dasharray", dash);
+                l.setAttribute("marker-end", "url(#arr)");
+                svg.appendChild(l);
+            }
+            function ln(svg, a, b, col, dash, w) {
+                const pa = ctr(a),
+                    pb = ctr(b);
+                if (!pa || !pb) return;
+                addLine(svg, pa.x, pa.b, pb.x, pb.t, col, dash, w);
+            }
+            function lnH(svg, a, b, col, dash, w) {
+                const pa = ctr(a),
+                    pb = ctr(b);
+                if (!pa || !pb) return;
+                addLine(svg, pa.r, pa.y, pb.l, pb.y, col, dash, w);
+            }
+
+            function drawLines(scale) {
+                const svg = document.getElementById("lines");
+                const defs = svg.querySelector("defs");
+                while (svg.lastChild !== defs) svg.removeChild(svg.lastChild);
+
+                const bl = "#4d90e0",
+                    te = "#28c890",
+                    pu = "#8878f0",
+                    am = "#d09030",
+                    co = "#e05030",
+                    gr = "#6a6e80",
+                    gn = "#6ac030",
+                    pk = "#d04090",
+                    rd = "#e03030";
+                const lw = Math.max(0.9, scale * 1.3);
+
+                ln(svg, "e-phones", "a-ap1", gr, "5 3", lw);
+                ln(svg, "e-laptops", "a-ap2", gr, "5 3", lw);
+                ln(svg, "e-iot", "a-ap1", gr, "5 3", lw);
+                ln(svg, "e-guests", "a-ap2", gr, "5 3", lw);
+                ln(svg, "e-work", "a-sw", gr, "5 3", lw);
+                ln(svg, "e-cameras", "a-sw", gr, "5 3", lw);
+                ln(svg, "e-printers", "a-sw", gr, "5 3", lw);
+                ln(svg, "e-cctv", "a-sw", gr, "5 3", lw);
+
+                ln(svg, "a-ap1", "s-home", bl, "3 2", lw);
+                ln(svg, "a-ap1", "s-guest", bl, "3 2", lw);
+                ln(svg, "a-ap2", "s-work", bl, "3 2", lw);
+                ln(svg, "a-ap2", "s-iot", bl, "3 2", lw);
+                ln(svg, "a-ap1", "a-sw", bl, "", lw * 1.3);
+                ln(svg, "a-ap2", "a-sw", bl, "", lw * 1.3);
+                ln(svg, "a-sw", "r-vyos", pu, "", lw * 1.8);
+
+                [
+                    "v-30",
+                    "v-40",
+                    "v-50",
+                    "v-60",
+                    "v-70",
+                    "v-80",
+                    "v-90",
+                    "v-mgmt",
+                ].forEach((id) => {
+                    const pa = ctr(id),
+                        pb = ctr("r-vyos");
+                    if (!pa || !pb) return;
+                    addLine(svg, pa.x, pa.b, pb.x, pb.t, te, "2 3", lw * 0.75);
+                });
+
+                ln(svg, "r-fw", "r-vyos", pu, "3 2", lw);
+                ln(svg, "r-vyos", "r-wg", pu, "", lw * 1.4);
+                ln(svg, "r-vyos", "r-dns", pu, "3 2", lw);
+                ln(svg, "r-vyos", "r-wan", pu, "", lw * 1.5);
+                ln(svg, "r-wan", "r-lte", gr, "", lw);
+                lnH(svg, "r-inet", "r-lte", gr, "5 3", lw);
+
+                ln(svg, "r-vyos", "s-nas", am, "", lw * 1.3);
+                ln(svg, "s-nas", "s-rep", co, "6 3", lw * 1.3);
+
+                ln(svg, "r-wg", "c-tun", pu, "", lw * 1.7);
+                lnH(svg, "c-tun", "c-efw", rd, "", lw * 1.7);
+                lnH(svg, "c-efw", "c-pve", pu, "", lw * 1.7);
+
+                [
+                    "c-ad",
+                    "c-ws",
+                    "c-tn",
+                    "c-adg",
+                    "c-omada",
+                    "c-npm",
+                    "c-nc",
+                    "c-uk",
+                    "c-daw",
+                    "c-n8n",
+                    "c-obs",
+                    "c-bes",
+                    "c-ts",
+                    "c-cf",
+                    "c-www",
+                ].forEach((id) => {
+                    ln(svg, "c-pve", id, gn, "3 2", lw * 0.85);
+                });
+
+                ln(svg, "c-npm", "c-cf", pk, "5 3", lw);
+                ln(svg, "c-cf", "c-www", pk, "", lw * 1.3);
+            }
+
+            // ═══════════════════════════════════════
+            // TOOLTIP
+            // ═══════════════════════════════════════
+            const tt = document.getElementById("tt");
+            const tth = document.getElementById("tt-h");
+            const ttb = document.getElementById("tt-b");
+            const ttd = document.getElementById("tt-dot");
+
+            document.querySelectorAll("[data-tip]").forEach((el) => {
+                el.addEventListener("mouseenter", (e) =>
+                    showTip(e, el.dataset.tip),
+                );
+                el.addEventListener("mousemove", moveTip);
+                el.addEventListener("mouseleave", () =>
+                    tt.classList.remove("show"),
+                );
+            });
+
+            function showTip(e, key) {
+                const d = D[key];
+                if (!d) return;
+                tth.textContent = d.t;
+                ttd.style.background = d.c || "#555";
+                ttb.innerHTML = d.r
+                    .map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`)
+                    .join("");
+                tt.classList.add("show");
+                moveTip(e);
+            }
+            function moveTip(e) {
+                const w = tt.offsetWidth || 270,
+                    h = tt.offsetHeight || 200;
+                let lx = e.clientX + 18,
+                    ly = e.clientY + 18;
+                if (lx + w > window.innerWidth - 10) lx = e.clientX - w - 18;
+                if (ly + h > window.innerHeight - 10) ly = e.clientY - h - 18;
+                if (lx < 6) lx = 6;
+                if (ly < 6) ly = 6;
+                tt.style.left = lx + "px";
+                tt.style.top = ly + "px";
+            }
+
+            // ═══════════════════════════════════════
+            // INIT
+            // ═══════════════════════════════════════
+            let resizeTimer;
+
+            window.addEventListener("resize", () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(layout, 80);
+            });
+
+            // ResizeObserver – wykrywa gdy Kubio zmieni wymiary kontenera
+            const _wrap = document.getElementById("wrap");
+            if (_wrap && window.ResizeObserver) {
+                const ro = new ResizeObserver(() => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(layout, 60);
+                });
+                ro.observe(_wrap);
+            }
+
+            // Kubio inicjalizuje się asynchronicznie po load – wielokrotne opóźnienia eliminują race condition
+            document.addEventListener("DOMContentLoaded", () => {
+                setTimeout(layout, 100);
+            });
+            window.addEventListener("load", () => {
+                layout();
+                setTimeout(layout, 200);
+                setTimeout(layout, 600);
+                setTimeout(layout, 1200);
+            });
+        </script>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.72rem;color:#3a4050;">
+      <span id="hl-hint">&gt; Hover na węźle = szczegóły &nbsp;·&nbsp; przyciski filtrują widok &nbsp;·&nbsp; scroll w poziomie jeśli diagram szerszy niż ekran</span>
+    </div>
+  </div>
+
+  <footer>
+    <span>&copy; 2026 krzysztofgawkowski.pl</span>
+    <span>root@kris-homelab:~$ <span style="color:var(--accent);">_</span></span>
+  </footer>
+
+</div>
+</div>
+
+<script>
+// ── HEADER ANIMATION ──────────────────────────────────────────
+(function () {
+  function startHeaderAnim() {
+    var ptxt = document.getElementById("header-prompt-text");
+    var pcur = document.getElementById("header-prompt-cursor");
+    var nameEl = document.getElementById("header-name");
+    var tagEl = document.getElementById("header-tagline");
+    if (!ptxt || !pcur || !nameEl || !tagEl) return;
+    var cmd = "root@kris-homelab:~$ cat /etc/homelab/topology.conf";
+    var i = 0;
+    pcur.style.display = "inline-block";
+    var t1 = setInterval(function () {
+      ptxt.textContent = cmd.substring(0, i++);
+      if (i > cmd.length) {
+        clearInterval(t1);
+        setTimeout(function () {
+          pcur.style.display = "none";
+          nameEl.style.visibility = "visible";
+          var full = "HOMELAB TOPOLOGY";
+          var node = nameEl.childNodes[0];
+          node.textContent = "";
+          var j = 0;
+          var t2 = setInterval(function () {
+            node.textContent = full.substring(0, j++);
+            if (j > full.length) {
+              clearInterval(t2);
+              setTimeout(function () {
+                tagEl.style.visibility = "visible";
+                tagEl.style.opacity = "0";
+                tagEl.style.transition = "opacity 0.8s";
+                requestAnimationFrame(function () {
+                  tagEl.style.opacity = "1";
+                });
+              }, 300);
+            }
+          }, 60);
+        }, 350);
+      }
+    }, 55);
+  }
+
+  startHeaderAnim();
+})();
+
+// CLOCK
+(function(){
+  function tick(){
+    var el=document.getElementById('clk');
+    if(!el) return;
+    var n=new Date(), p=function(x){return ('0'+x).slice(-2);};
+    el.textContent=p(n.getDate())+'.'+p(n.getMonth()+1)+'.'+n.getFullYear()+'  '+p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
+  }
+  tick();
+  setInterval(tick,1000);
+})();
+</script>
+
+<script>
+
+            // ═══════════════════════════════════════
+            // TOOLTIP DATA
+            // ═══════════════════════════════════════
+            const D = {
+                phones: {
+                    t: "Telefony",
+                    c: "#55596a",
+                    r: [
+                        ["Sieć", "WiFi 2.4 / 5 GHz"],
+                        ["VLAN", "VLAN120 / VLAN100 (gość)"],
+                        ["DNS", "AdGuard 10.19.19.19"],
+                    ],
+                },
+                laptops: {
+                    t: "Laptopy / PC",
+                    c: "#55596a",
+                    r: [
+                        ["Sieć", "WiFi + Ethernet"],
+                        ["VLAN", "VLAN60 (kabel), VLAN120 (WiFi)"],
+                        ["DNS", "10.19.19.12 (AD) / AdGuard"],
+                    ],
+                },
+                cameras: {
+                    t: "Kamery CCTV",
+                    c: "#55596a",
+                    r: [
+                        ["IP", "10.20.120.10"],
+                        ["VLAN src", "VLAN120"],
+                        ["Stream do", "VLAN40 CCTV (rule 250)"],
+                        ["Protokół", "RTSP"],
+                    ],
+                },
+                printers: {
+                    t: "Drukarki",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN70 · 10.20.70.0/24"],
+                        ["Dostęp", "VLAN60 NetBIOS, VLAN120 SMB 445"],
+                    ],
+                },
+                iot: {
+                    t: "IoT / Smart Home",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN120 · WiFi 2.4 GHz"],
+                        ["Izolacja", "Rule 496 blokuje inter-VLAN"],
+                    ],
+                },
+                guests: {
+                    t: "Sieć gościnowa",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["DNS", "8.8.8.8 (tylko internet)"],
+                        ["Blokada", "Rule 489: brak DNS wewn."],
+                    ],
+                },
+                work: {
+                    t: "Stacje robocze Praca",
+                    c: "#55596a",
+                    r: [
+                        ["VLAN", "VLAN80 (kabel) / VLAN110 (WiFi)"],
+                        ["DNS", "OpenDNS 208.67.222.222"],
+                        ["Blokada", "Rule 495 inter-VLAN drop"],
+                    ],
+                },
+                "cctv-mon": {
+                    t: "Monitor CCTV",
+                    c: "#55596a",
+                    r: [
+                        ["IP", "10.20.40.2"],
+                        ["VLAN", "VLAN40 · 10.20.40.0/24"],
+                        ["Dostęp", "VLAN60 i VLAN120 (rules 240, 300)"],
+                    ],
+                },
+                ap1: {
+                    t: "Access Point 1",
+                    c: "#3a7fcc",
+                    r: [
+                        ["Model", "TP-Link EAP (Omada)"],
+                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["SSID-y", "Home · Guest · Work · IoT"],
+                        ["Controller", "Omada LXC109 @ OVH"],
+                    ],
+                },
+                ap2: {
+                    t: "Access Point 2",
+                    c: "#3a7fcc",
+                    r: [
+                        ["Model", "TP-Link EAP (Omada)"],
+                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["SSID-y", "Home · Guest · Work · IoT"],
+                        ["Uplink", "Switch zarządzalny"],
+                    ],
+                },
+                "ssid-home": {
+                    t: "SSID Home",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN120 · 10.20.120.0/24"],
+                        ["Pasmo", "2.4 GHz + 5 GHz"],
+                        ["DNS", "10.19.19.12 + FamilyShield"],
+                        ["Lease", "14400 s"],
+                    ],
+                },
+                "ssid-guest": {
+                    t: "SSID Guest",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["DNS", "8.8.8.8 (zewnętrzny)"],
+                        ["Izolacja", "Klienci oddzieleni"],
+                    ],
+                },
+                "ssid-work": {
+                    t: "SSID Work WiFi",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN110 · 10.20.110.0/24"],
+                        ["DNS", "10.19.19.19 (AdGuard)"],
+                        ["Pasmo", "5 GHz preferowane"],
+                    ],
+                },
+                "ssid-iot": {
+                    t: "SSID IoT",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VLAN", "VLAN120 · razem z Home"],
+                        ["Pasmo", "2.4 GHz"],
+                        ["Rola", "Smart home, czujniki"],
+                    ],
+                },
+                switch: {
+                    t: "Switch zarządzalny",
+                    c: "#3a7fcc",
+                    r: [
+                        ["Rola", "Trunk VLAN do VyOS eth0"],
+                        ["VLAN trunk", "20,30,40,50,60,70,80,90,100,110,120"],
+                        ["Mgmt", "10.18.18.0/24"],
+                    ],
+                },
+                vl30: {
+                    t: "VLAN30 — NAS",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.30.0/24"],
+                        ["Urządzenia", "TrueNAS 10.20.30.4"],
+                        ["Blokada", "Rule 492 inter-VLAN drop"],
+                    ],
+                },
+                vl40: {
+                    t: "VLAN40 — CCTV",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.40.0/24"],
+                        ["Host", "10.20.40.2"],
+                        ["Blokada", "Rule 493"],
+                    ],
+                },
+                vl50: {
+                    t: "VLAN50 — AP Management",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.50.0/24"],
+                        ["Omada", "10.19.19.20 (rule 330)"],
+                        ["Blokada", "Rule 494"],
+                    ],
+                },
+                vl60: {
+                    t: "VLAN60 — Klienci przewodowi",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.60.0/24"],
+                        ["DNS", "10.19.19.12 (AD DC01)"],
+                        ["Dostęp", "NAS NetBIOS, Printers, CCTV"],
+                    ],
+                },
+                vl70: {
+                    t: "VLAN70 — Drukarki",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.70.0/24"],
+                        ["DNS", "10.19.19.12"],
+                    ],
+                },
+                vl80: {
+                    t: "VLAN80 — Praca kabel",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.80.0/24"],
+                        ["DNS", "OpenDNS 208.67.222.222"],
+                        ["Blokada", "Rule 495"],
+                    ],
+                },
+                vl90: {
+                    t: "VLAN90 — MGMT / Admin",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.20.90.0/24"],
+                        ["Prawa", "Pełny dostęp (rule 110)"],
+                        ["SSH", "Tylko z VLAN90 (rule 30)"],
+                    ],
+                },
+                vmgmt: {
+                    t: "MGMT-LAN",
+                    c: "#1f9070",
+                    r: [
+                        ["Sieć", "10.18.18.0/24"],
+                        ["Interfejs", "eth0 VyOS"],
+                        ["Dostęp", "Pełny (rule 100)"],
+                    ],
+                },
+                vyos: {
+                    t: "VyOS Router — m625q",
+                    c: "#7868e0",
+                    r: [
+                        ["LAN", "eth0 · 10.18.18.1/24"],
+                        ["WAN", "eth1 · DHCP 192.168.1.10"],
+                        ["VPN", "WireGuard wg0 · 10.0.2.1/24"],
+                        ["Firewall", "forward filter default DROP"],
+                        ["NAT", "masquerade → eth1"],
+                        ["VLAN", "11 vif (20–120)"],
+                    ],
+                },
+                wg: {
+                    t: "WireGuard VPN",
+                    c: "#7868e0",
+                    r: [
+                        ["Interface", "wg0 · 10.0.2.1/24"],
+                        ["Peer", "pve-new @ 203.0.113.10:51820"],
+                        ["Allowed IPs", "10.0.2.2/32 + 10.19.19.0/24"],
+                        ["Port", "UDP 51820"],
+                        ["Keepalive", "25s"],
+                    ],
+                },
+                fw: {
+                    t: "Firewall / NAT",
+                    c: "#7868e0",
+                    r: [
+                        ["Default", "DROP (forward + input)"],
+                        ["Established", "Accept rule 10"],
+                        ["WAN chain", "OUTSIDE-LOCAL"],
+                        ["NAT", "masquerade 10.20.0.0/16"],
+                        ["Logging", "Włączone"],
+                    ],
+                },
+                wan: {
+                    t: "WAN — eth1",
+                    c: "#7868e0",
+                    r: [
+                        ["Adres", "192.168.1.10/24 (DHCP)"],
+                        ["Upstream", "ISP LTE Router 192.168.1.1"],
+                        ["NAT", "masquerade source"],
+                        ["WireGuard", "UDP 51820 inbound"],
+                    ],
+                },
+                lte: {
+                    t: "ISP LTE Router",
+                    c: "#55596a",
+                    r: [
+                        ["IP LAN", "192.168.1.1"],
+                        ["IP WAN", "Dynamiczne / LTE"],
+                        ["NAT", "Double NAT → VyOS"],
+                        ["Uwaga", "VyOS jest za NAT-em operatora"],
+                    ],
+                },
+                internet: {
+                    t: "Internet / WAN uplink",
+                    c: "#55596a",
+                    r: [
+                        ["Typ", "Łącze LTE"],
+                        ["Trasa", "Internet → LTE Router → VyOS eth1"],
+                        ["WireGuard", "UDP 51820 przez LTE NAT"],
+                    ],
+                },
+                truenas: {
+                    t: "TrueNAS Primary",
+                    c: "#c07820",
+                    r: [
+                        ["IP", "10.20.30.4"],
+                        ["VLAN", "VLAN30"],
+                        ["Usługi", "SMB, NFS, VM Datasets"],
+                        ["Replikacja", "→ TrueNAS Replica ZFS"],
+                        ["Syslog", "→ OpenObserve UDP 514"],
+                    ],
+                },
+                replica: {
+                    t: "TrueNAS Replica — Air Gap",
+                    c: "#d04828",
+                    r: [
+                        ["Rola", "Replication target"],
+                        ["Mechanizm", "ZFS snapshot replication"],
+                        ["Typ", "Fizycznie odseparowany"],
+                        ["Cel", "Disaster recovery"],
+                    ],
+                },
+                tunnel: {
+                    t: "WireGuard Tunnel → OVH",
+                    c: "#7868e0",
+                    r: [
+                        ["Peer", "pve-new · 203.0.113.20"],
+                        ["VyOS", "10.0.2.1"],
+                        ["PVE", "10.0.2.2"],
+                        ["Route", "10.19.19.0/24 via wg0"],
+                    ],
+                },
+                "ovh-fw": {
+                    t: "OVH Edge Firewall",
+                    c: "#cc2828",
+                    r: [
+                        ["P0", "TCP established — Zezwalaj"],
+                        ["P2", "UDP dst:41641 — Tailscale"],
+                        ["P3", "TCP dst:443 — HTTPS"],
+                        ["P5", "ICMP — Zezwalaj"],
+                        ["P7", "UDP dst:51820 — WireGuard"],
+                        ["P9", "IPv4 all — DROP (default)"],
+                    ],
+                },
+                proxmox: {
+                    t: "Proxmox VE — pve-kris-1",
+                    c: "#7868e0",
+                    r: [
+                        ["Lokalizacja", "OVH Dedicated Server"],
+                        ["Dostęp", "WireGuard 10.0.2.2"],
+                        ["VMs", "3 (VM101, VM201, VM202)"],
+                        ["LXCs", "12 kontenerów"],
+                        ["Sieć", "10.19.19.0/24"],
+                    ],
+                },
+                ad: {
+                    t: "Active Directory DC — VM201",
+                    c: "#3a7fcc",
+                    r: [
+                        ["IP", "10.19.19.12"],
+                        ["OS", "Windows Server Core"],
+                        ["Rola", "AD DS, DNS port 53"],
+                        ["DHCP ref", "DNS primary VLAN60, 70, 120"],
+                    ],
+                },
+                winsrv: {
+                    t: "Windows Server — VM202",
+                    c: "#3a7fcc",
+                    r: [
+                        ["VMID", "202"],
+                        ["Nazwa", "win-srv"],
+                        ["Lokalizacja", "Proxmox / OVH"],
+                    ],
+                },
+                "truenas-pve": {
+                    t: "TrueNAS VM — VM101",
+                    c: "#c07820",
+                    r: [
+                        ["VMID", "101"],
+                        ["Rola", "Storage dla PVE"],
+                    ],
+                },
+                adguard: {
+                    t: "AdGuard Home — LXC104",
+                    c: "#3a7fcc",
+                    r: [
+                        ["IP", "10.19.19.19"],
+                        ["Rola", "DNS sinkhole, blokowanie reklam"],
+                        ["Upstream", "1.1.1.1, 8.8.8.8"],
+                        ["Używa go", "Większość VLAN-ów"],
+                    ],
+                },
+                omada: {
+                    t: "Omada Controller — LXC109",
+                    c: "#3a7fcc",
+                    r: [
+                        ["IP", "10.19.19.20"],
+                        ["Rola", "Zarządzanie AP TP-Link"],
+                        ["Dostęp", "VLAN50 → rule 330"],
+                    ],
+                },
+                npm: {
+                    t: "Nginx Proxy Manager — LXC102",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Reverse proxy"],
+                        ["Przyjmuje", "cloudflared tunnel"],
+                        ["TLS", "Cloudflare edge SSL"],
+                    ],
+                },
+                nextcloud: {
+                    t: "Nextcloud — LXC103",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Self-hosted cloud storage"],
+                        ["Proxy", "NPM + cloudflared"],
+                    ],
+                },
+                uptime: {
+                    t: "UptimeKuma — LXC106",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Monitoring dostępności"],
+                        ["Dashboard", "Status page"],
+                    ],
+                },
+                dawarich: {
+                    t: "Dawarich — LXC105",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Historia lokalizacji GPS"],
+                        ["Proxy", "NPM + cloudflared"],
+                    ],
+                },
+                n8n: {
+                    t: "n8n — LXC114",
+                    c: "#4a9020",
+                    r: [
+                        ["Rola", "Automatyzacja workflow"],
+                        ["Proxy", "NPM + cloudflared"],
+                    ],
+                },
+                openobs: {
+                    t: "OpenObserve",
+                    c: "#1f9070",
+                    r: [
+                        ["IP", "10.19.19.6"],
+                        ["Rola", "Log aggregation"],
+                        ["Syslog", "NAS → UDP 514 (rule 261)"],
+                    ],
+                },
+                beszel: {
+                    t: "Beszel — LXC111",
+                    c: "#1f9070",
+                    r: [["Rola", "Lightweight server monitor"]],
+                },
+                tailscale: {
+                    t: "Tailscale — LXC112",
+                    c: "#1f9070",
+                    r: [
+                        ["Rola", "Backup VPN"],
+                        ["Port", "UDP 41641 (OVH FW rule P2)"],
+                    ],
+                },
+                cloudflared: {
+                    t: "cloudflared — CF Tunnel",
+                    c: "#c03880",
+                    r: [
+                        ["Rola", "Tunel Cloudflare → NPM"],
+                        ["Bez portów", "Brak otwartych portów WAN"],
+                        ["Port OVH", "TCP 443 (OVH FW rule P3)"],
+                    ],
+                },
+                sites: {
+                    t: "Strony WWW (3 domeny)",
+                    c: "#c03880",
+                    r: [
+                        ["strona_www_1", "LXC301"],
+                        ["strona_www_2", "LXC303"],
+                        ["strona_www_3", "LXC302"],
+                        ["Stos", "cloudflared → NPM → LXC"],
+                    ],
+                },
+                "dns-vyos": {
+                    t: "DNS Forwarding (VyOS)",
+                    c: "#7868e0",
+                    r: [
+                        ["Cache", "10 000 wpisów"],
+                        [
+                            "Forwarders",
+                            "1.1.1.1, 8.8.8.8, 10.19.19.12, .19.19",
+                        ],
+                        ["Override", "example.dyn-dns.test → 10.19.19.19"],
+                    ],
+                },
+            };
+
+            // ═══════════════════════════════════════
+            // LAYOUT — proporcjonalne pozycje
+            // ═══════════════════════════════════════
+            const BASE_W = 1200;
+            const BASE_H = 1160; // wyższy, większe odstępy między warstwami
+
+            const NODES = [
+                // L0 – Endpoints (y=0.050)
+                ["e-phones", 0.038, 0.05],
+                ["e-laptops", 0.18, 0.05],
+                ["e-cameras", 0.322, 0.05],
+                ["e-printers", 0.464, 0.05],
+                ["e-iot", 0.538, 0.05],
+                ["e-guests", 0.68, 0.05],
+                ["e-work", 0.82, 0.05],
+                ["e-cctv", 0.96, 0.05],
+
+                // L1 – APs (y=0.155)
+                ["a-ap1", 0.09, 0.155],
+                ["a-ap2", 0.255, 0.155],
+                // SSIDs (y=0.220)
+                ["s-home", 0.038, 0.222],
+                ["s-guest", 0.13, 0.222],
+                ["s-work", 0.22, 0.222],
+                ["s-iot", 0.31, 0.222],
+                // Switch (y=0.175)
+                ["a-sw", 0.51, 0.172],
+                // VLANs (y=0.250)
+                ["v-30", 0.395, 0.252],
+                ["v-40", 0.472, 0.252],
+                ["v-50", 0.548, 0.252],
+                ["v-60", 0.624, 0.252],
+                ["v-70", 0.7, 0.252],
+                ["v-80", 0.776, 0.252],
+                ["v-90", 0.852, 0.252],
+                ["v-mgmt", 0.94, 0.252],
+
+                // L2 – VyOS (y=0.362..0.470)
+                ["r-fw", 0.138, 0.365],
+                ["r-vyos", 0.4, 0.355],
+                ["r-wg", 0.64, 0.365],
+                ["r-dns", 0.83, 0.365],
+                ["r-wan", 0.4, 0.438],
+                ["r-lte", 0.4, 0.502],
+                ["r-inet", 0.255, 0.502],
+
+                // L3 – Storage (y=0.610, left)
+                ["s-nas", 0.055, 0.618],
+                ["s-rep", 0.17, 0.618],
+
+                // L4 – Cloud (y=0.610, right)
+                ["c-tun", 0.32, 0.618],
+                ["c-efw", 0.468, 0.618],
+                ["c-pve", 0.66, 0.618],
+
+                // VMs (y=0.705)
+                ["c-ad", 0.32, 0.705],
+                ["c-ws", 0.44, 0.705],
+                ["c-tn", 0.558, 0.705],
+                ["c-adg", 0.7, 0.705],
+                ["c-omada", 0.848, 0.705],
+
+                // LXC row 1 (y=0.793)
+                ["c-npm", 0.32, 0.793],
+                ["c-nc", 0.44, 0.793],
+                ["c-uk", 0.558, 0.793],
+                ["c-daw", 0.7, 0.793],
+                ["c-n8n", 0.848, 0.793],
+
+                // LXC row 2 (y=0.880)
+                ["c-obs", 0.32, 0.88],
+                ["c-bes", 0.44, 0.88],
+                ["c-ts", 0.558, 0.88],
+                ["c-cf", 0.7, 0.88],
+                ["c-www", 0.848, 0.88],
+            ];
+
+            // [bandId, lblId, propX, propY, propW, propH]
+            const BANDS = [
+                ["band-0", "lbl-0", 0.006, 0.008, 0.988, 0.088], // endpoints
+                ["band-1", "lbl-1", 0.006, 0.112, 0.988, 0.172], // access+vlans
+                ["band-2", "lbl-2", 0.006, 0.298, 0.988, 0.248], // routing
+                ["band-3", "lbl-3", 0.006, 0.562, 0.215, 0.186], // storage
+                ["band-4", "lbl-4", 0.232, 0.562, 0.762, 0.4], // cloud
+            ];
+
+            // ═══════════════════════════════════════
+            // VIEW FILTER
+            // ═══════════════════════════════════════
+            const VIEW_GROUPS = {
+                all: null, // pokaż wszystko
+                routing: ["routing", "all"],
+                storage: ["storage", "all"],
+                cloud: ["cloud", "all"],
+            };
+
+            let currentView = "all";
+
+            function applyView(view) {
+                currentView = view;
+                const allowed = VIEW_GROUPS[view];
+
+                document.querySelectorAll(".node").forEach((el) => {
+                    if (!allowed) {
+                        el.classList.remove("dimmed");
+                    } else {
+                        const groups = (el.dataset.group || "").split(" ");
+                        const visible = groups.some((g) => allowed.includes(g));
+                        el.classList.toggle("dimmed", !visible);
+                    }
+                });
+
+                // Bandy
+                const bandMap = {
+                    all: ["band-0", "band-1", "band-2", "band-3", "band-4"],
+                    routing: ["band-0", "band-1", "band-2"],
+                    storage: ["band-3"],
+                    cloud: ["band-4"],
+                };
+                ["band-0", "band-1", "band-2", "band-3", "band-4"].forEach(
+                    (bid, i) => {
+                        const lbl = document.getElementById("lbl-" + i);
+                        const band = document.getElementById(bid);
+                        const vis = !allowed || bandMap[view].includes(bid);
+                        band && band.classList.toggle("dimmed", !vis);
+                        lbl && lbl.classList.toggle("dimmed", !vis);
+                    },
+                );
+
+                drawLines(lastScale);
+            }
+
+            document.querySelectorAll(".sw-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    document
+                        .querySelectorAll(".sw-btn")
+                        .forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    applyView(btn.dataset.view);
+                });
+            });
+
+            // ═══════════════════════════════════════
+            // LAYOUT ENGINE
+            // ═══════════════════════════════════════
+            let lastScale = 1;
+
+            function layout() {
+                const vw = Math.max((document.getElementById("hl-wrap") ? document.getElementById("hl-wrap").clientWidth : window.innerWidth) - 32, 560);
+                const scale = vw / BASE_W;
+                lastScale = scale;
+                const W = Math.round(BASE_W * scale);
+                const H = Math.round(BASE_H * scale);
+
+                const canvas = document.getElementById("canvas");
+                canvas.style.width = W + "px";
+                canvas.style.height = H + "px";
+
+                document.getElementById("scale-label").textContent =
+                    `${W}×${H}px · ${Math.round(scale * 100)}%`;
+
+                NODES.forEach(([id, px, py]) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const ni = el.querySelector(".ni");
+                    const ew = ni ? ni.offsetWidth : 110;
+                    const eh = ni ? ni.offsetHeight : 44;
+                    el.style.left = Math.round(px * W - ew / 2) + "px";
+                    el.style.top = Math.round(py * H - eh / 2) + "px";
+                });
+
+                BANDS.forEach(([bid, lid, px, py, pw, ph], i) => {
+                    const band = document.getElementById(bid);
+                    const lbl = document.getElementById(lid);
+                    if (!band || !lbl) return;
+                    const bx = Math.round(px * W);
+                    const by = Math.round(py * H);
+                    band.style.left = bx + "px";
+                    band.style.top = by + "px";
+                    band.style.width = Math.round(pw * W) + "px";
+                    band.style.height = Math.round(ph * H) + "px";
+                    lbl.style.left = bx + 10 + "px";
+                    lbl.style.top = by + 7 + "px";
+                });
+
+                drawLines(scale);
+            }
+
+            // ═══════════════════════════════════════
+            // DRAW LINES
+            // ═══════════════════════════════════════
+            function ctr(id) {
+                const el = document.getElementById(id);
+                if (!el || el.classList.contains("dimmed")) return null;
+                return {
+                    x: el.offsetLeft + el.offsetWidth / 2,
+                    y: el.offsetTop + el.offsetHeight / 2,
+                    t: el.offsetTop,
+                    b: el.offsetTop + el.offsetHeight,
+                    l: el.offsetLeft,
+                    r: el.offsetLeft + el.offsetWidth,
+                };
+            }
+
+            function addLine(svg, x1, y1, x2, y2, col, dash, w) {
+                const l = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "line",
+                );
+                l.setAttribute("x1", x1);
+                l.setAttribute("y1", y1);
+                l.setAttribute("x2", x2);
+                l.setAttribute("y2", y2);
+                l.setAttribute("stroke", col || "#555");
+                l.setAttribute("stroke-width", w || 1.2);
+                l.setAttribute("opacity", "0.6");
+                if (dash) l.setAttribute("stroke-dasharray", dash);
+                l.setAttribute("marker-end", "url(#arr)");
+                svg.appendChild(l);
+            }
+            function ln(svg, a, b, col, dash, w) {
+                const pa = ctr(a),
+                    pb = ctr(b);
+                if (!pa || !pb) return;
+                addLine(svg, pa.x, pa.b, pb.x, pb.t, col, dash, w);
+            }
+            function lnH(svg, a, b, col, dash, w) {
+                const pa = ctr(a),
+                    pb = ctr(b);
+                if (!pa || !pb) return;
+                addLine(svg, pa.r, pa.y, pb.l, pb.y, col, dash, w);
+            }
+
+            function drawLines(scale) {
+                const svg = document.getElementById("lines");
+                const defs = svg.querySelector("defs");
+                while (svg.lastChild !== defs) svg.removeChild(svg.lastChild);
+
+                const bl = "#4d90e0",
+                    te = "#28c890",
+                    pu = "#8878f0",
+                    am = "#d09030",
+                    co = "#e05030",
+                    gr = "#6a6e80",
+                    gn = "#6ac030",
+                    pk = "#d04090",
+                    rd = "#e03030";
+                const lw = Math.max(0.9, scale * 1.3);
+
+                ln(svg, "e-phones", "a-ap1", gr, "5 3", lw);
+                ln(svg, "e-laptops", "a-ap2", gr, "5 3", lw);
+                ln(svg, "e-iot", "a-ap1", gr, "5 3", lw);
+                ln(svg, "e-guests", "a-ap2", gr, "5 3", lw);
+                ln(svg, "e-work", "a-sw", gr, "5 3", lw);
+                ln(svg, "e-cameras", "a-sw", gr, "5 3", lw);
+                ln(svg, "e-printers", "a-sw", gr, "5 3", lw);
+                ln(svg, "e-cctv", "a-sw", gr, "5 3", lw);
+
+                ln(svg, "a-ap1", "s-home", bl, "3 2", lw);
+                ln(svg, "a-ap1", "s-guest", bl, "3 2", lw);
+                ln(svg, "a-ap2", "s-work", bl, "3 2", lw);
+                ln(svg, "a-ap2", "s-iot", bl, "3 2", lw);
+                ln(svg, "a-ap1", "a-sw", bl, "", lw * 1.3);
+                ln(svg, "a-ap2", "a-sw", bl, "", lw * 1.3);
+                ln(svg, "a-sw", "r-vyos", pu, "", lw * 1.8);
+
+                [
+                    "v-30",
+                    "v-40",
+                    "v-50",
+                    "v-60",
+                    "v-70",
+                    "v-80",
+                    "v-90",
+                    "v-mgmt",
+                ].forEach((id) => {
+                    const pa = ctr(id),
+                        pb = ctr("r-vyos");
+                    if (!pa || !pb) return;
+                    addLine(svg, pa.x, pa.b, pb.x, pb.t, te, "2 3", lw * 0.75);
+                });
+
+                ln(svg, "r-fw", "r-vyos", pu, "3 2", lw);
+                ln(svg, "r-vyos", "r-wg", pu, "", lw * 1.4);
+                ln(svg, "r-vyos", "r-dns", pu, "3 2", lw);
+                ln(svg, "r-vyos", "r-wan", pu, "", lw * 1.5);
+                ln(svg, "r-wan", "r-lte", gr, "", lw);
+                lnH(svg, "r-inet", "r-lte", gr, "5 3", lw);
+
+                ln(svg, "r-vyos", "s-nas", am, "", lw * 1.3);
+                ln(svg, "s-nas", "s-rep", co, "6 3", lw * 1.3);
+
+                ln(svg, "r-wg", "c-tun", pu, "", lw * 1.7);
+                lnH(svg, "c-tun", "c-efw", rd, "", lw * 1.7);
+                lnH(svg, "c-efw", "c-pve", pu, "", lw * 1.7);
+
+                [
+                    "c-ad",
+                    "c-ws",
+                    "c-tn",
+                    "c-adg",
+                    "c-omada",
+                    "c-npm",
+                    "c-nc",
+                    "c-uk",
+                    "c-daw",
+                    "c-n8n",
+                    "c-obs",
+                    "c-bes",
+                    "c-ts",
+                    "c-cf",
+                    "c-www",
+                ].forEach((id) => {
+                    ln(svg, "c-pve", id, gn, "3 2", lw * 0.85);
+                });
+
+                ln(svg, "c-npm", "c-cf", pk, "5 3", lw);
+                ln(svg, "c-cf", "c-www", pk, "", lw * 1.3);
+            }
+
+            // ═══════════════════════════════════════
+            // TOOLTIP
+            // ═══════════════════════════════════════
+            const tt = document.getElementById("tt");
+            const tth = document.getElementById("tt-h");
+            const ttb = document.getElementById("tt-b");
+            const ttd = document.getElementById("tt-dot");
+
+            document.querySelectorAll("[data-tip]").forEach((el) => {
+                el.addEventListener("mouseenter", (e) =>
+                    showTip(e, el.dataset.tip),
+                );
+                el.addEventListener("mousemove", moveTip);
+                el.addEventListener("mouseleave", () =>
+                    tt.classList.remove("show"),
+                );
+            });
+
+            function showTip(e, key) {
+                const d = D[key];
+                if (!d) return;
+                tth.textContent = d.t;
+                ttd.style.background = d.c || "#555";
+                ttb.innerHTML = d.r
+                    .map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`)
+                    .join("");
+                tt.classList.add("show");
+                moveTip(e);
+            }
+            function moveTip(e) {
+                const w = tt.offsetWidth || 270,
+                    h = tt.offsetHeight || 200;
+                let lx = e.clientX + 18,
+                    ly = e.clientY + 18;
+                if (lx + w > window.innerWidth - 10) lx = e.clientX - w - 18;
+                if (ly + h > window.innerHeight - 10) ly = e.clientY - h - 18;
+                if (lx < 6) lx = 6;
+                if (ly < 6) ly = 6;
+                tt.style.left = lx + "px";
+                tt.style.top = ly + "px";
+            }
+
+            // ═══════════════════════════════════════
+            // INIT
+            // ═══════════════════════════════════════
+            let resizeTimer;
+
+            window.addEventListener("resize", () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(layout, 80);
+            });
+
+            // ResizeObserver – wykrywa gdy Kubio zmieni wymiary kontenera
+            const _wrap = document.getElementById("wrap");
+            if (_wrap && window.ResizeObserver) {
+                const ro = new ResizeObserver(() => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(layout, 60);
+                });
+                ro.observe(_wrap);
+            }
+
+            // Kubio inicjalizuje się asynchronicznie po load – wielokrotne opóźnienia eliminują race condition
+            document.addEventListener("DOMContentLoaded", () => {
+                setTimeout(layout, 100);
+            });
+            window.addEventListener("load", () => {
+                layout();
+                setTimeout(layout, 200);
+                setTimeout(layout, 600);
+                setTimeout(layout, 1200);
+            });
+
+</script>
+</body>
+</html>

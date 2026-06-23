@@ -1,0 +1,2485 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Krzysztof Gawkowski — IT Infrastructure</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --font-body: "JetBrains Mono", monospace;
+                --font-mono: "JetBrains Mono", monospace;
+                --font-display: "JetBrains Mono", monospace;
+                --font-hero: "Share Tech Mono", monospace;
+                --pw-bg: #0a0c10;
+                --pw-accent: #2dd4bf;
+                --pw-warm: #f97316;
+                --text: #dde3e2;
+                --muted: #7e8c8a;
+                --bg: var(--pw-bg);
+                --border: #16211f;
+                --terminal-bg: #070a0d;
+                --surface: color-mix(in srgb, var(--text) 3%, transparent);
+                --surface-hover: color-mix(in srgb, var(--pw-accent) 6%, transparent);
+                --surface-active: color-mix(in srgb, var(--pw-accent) 12%, transparent);
+                --surface-nav: rgba(45, 212, 191, 0.05);
+                --green: var(--text);
+                --dim-green: var(--muted);
+                --accent: var(--pw-accent);
+                --accent2: var(--pw-warm);
+                --card-bg: var(--surface);
+                --glow: rgba(45, 212, 191, 0.15);
+            }
+            body.amber {
+                --green: #e8c87a;
+                --dim-green: #8a7040;
+                --accent: #f0a830;
+                --accent2: #60c8a0;
+                --border: #2a2010;
+                --glow: rgba(240, 168, 48, 0.15);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background-color: var(--bg);
+                color: var(--green);
+                font-family: var(--font-body);
+                font-size: 15px;
+                font-weight: 400;
+                line-height: 1.75;
+                min-height: 100vh;
+                transition:
+                    background-color 0.4s,
+                    color 0.4s,
+                    border-color 0.4s;
+            }
+            body * {
+                text-shadow: none;
+            }
+
+            /* ── MATRIX CANVAS ── */
+            #matrix-canvas {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+                background: black;
+            }
+            #matrix-canvas.active {
+                display: block;
+            }
+            #matrix-exit {
+                display: none;
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 10000;
+                color: var(--green);
+                font-family: var(--font-mono);
+                font-size: 0.9rem;
+                text-shadow: 0 0 8px var(--glow);
+                cursor: pointer;
+                border: 1px solid var(--green);
+                padding: 0.4rem 1.2rem;
+                background: rgba(0, 0, 0, 0.8);
+            }
+            #matrix-exit.active {
+                display: block;
+            }
+
+            /* ── BOOT SCREEN ── */
+            #boot-screen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: var(--bg);
+                z-index: 1000;
+                padding: 2rem;
+                font-family: var(--font-mono);
+                font-size: 0.85rem;
+                overflow: hidden;
+            }
+            #boot-screen.hidden {
+                display: none;
+            }
+            #boot-lines {
+                white-space: pre;
+            }
+            #boot-lines span {
+                display: block;
+                opacity: 0;
+                animation: fadeIn 0.05s forwards;
+            }
+
+            @keyframes fadeIn {
+                to {
+                    opacity: 1;
+                }
+            }
+
+            /* ── MAIN ── */
+            #main {
+                display: none;
+            }
+            #main.visible {
+                display: block;
+            }
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            /* ── HEADER ── */
+            header {
+                border: 1px solid var(--border);
+                background: linear-gradient(
+                    135deg,
+                    rgba(45, 212, 191, 0.04) 0%,
+                    rgba(10, 12, 16, 0) 60%
+                );
+                padding: 1.5rem 2rem;
+                margin-bottom: 2rem;
+                position: relative;
+                box-shadow:
+                    inset 0 1px 0 rgba(45, 212, 191, 0.15),
+                    0 4px 24px rgba(0, 0, 0, 0.6);
+            }
+            header::before {
+                content: "CONSOLE";
+                position: absolute;
+                top: -0.65rem;
+                left: 1rem;
+                background: var(--bg);
+                padding: 0 0.8rem;
+                font-family: var(--font-mono);
+                font-size: 0.8rem;
+                color: var(--accent);
+                font-weight: bold;
+                letter-spacing: 2px;
+            }
+            .prompt-line {
+                color: var(--accent);
+                font-family: var(--font-mono);
+                font-size: 0.85rem;
+                margin-bottom: 0.5rem;
+                opacity: 0.9;
+            }
+            h1, h2, h3, h4 {
+                font-family: var(--font-display);
+                letter-spacing: -0.03em;
+                font-weight: 700;
+            }
+            h1 {
+                font-size: 1.75rem;
+                color: #ffffff;
+                margin-bottom: 0.35rem;
+            }
+            #header-name {
+                font-family: var(--font-hero);
+                font-weight: normal;
+                letter-spacing: 3px;
+            }
+            .tagline {
+                font-family: var(--font-body);
+                color: #7a8494;
+                font-size: 0.84rem;
+                letter-spacing: 0.5px;
+                flex-wrap: wrap;
+            }
+            .cursor {
+                display: inline-block;
+                width: 9px;
+                height: 1em;
+                background: var(--accent);
+                animation: blink 1s step-end infinite;
+                vertical-align: text-bottom;
+                margin-left: 2px;
+                opacity: 0.9;
+            }
+            @keyframes blink {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0;
+                }
+            }
+
+            /* ── NAV ── */
+            nav {
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 0;
+                margin-bottom: 2rem;
+                border: 1px solid var(--border);
+                background: var(--surface-nav);
+                overflow: visible;
+                align-items: stretch;
+            }
+            nav a {
+                color: var(--dim-green);
+                text-decoration: none;
+                padding: 0.5rem 1rem;
+                border-right: 1px solid var(--border);
+                font-family: var(--font-body);
+                font-size: 0.82rem;
+                transition: all 0.15s;
+                letter-spacing: 0.5px;
+                flex-shrink: 0;
+            }
+            nav a:hover {
+                background: var(--surface-active);
+                color: var(--accent);
+                text-shadow: none;
+            }
+            nav a.active {
+                background: color-mix(in srgb, var(--pw-accent) 14%, transparent);
+                color: var(--accent);
+                text-shadow: none;
+                border-bottom: 2px solid var(--accent);
+            }
+            nav a:last-child {
+                border-right: none;
+            }
+
+            /* ── SECTIONS ── */
+            .section {
+                border: 1px solid var(--border);
+                background: var(--surface);
+                padding: 1.8rem 2.2rem;
+                margin-bottom: 2rem;
+                position: relative;
+                box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+            }
+            .section-label {
+                position: absolute;
+                top: -0.65rem;
+                left: 1rem;
+                background: var(--bg);
+                padding: 0 0.8rem;
+                font-family: var(--font-mono);
+                font-size: 0.72rem;
+                color: var(--accent);
+                letter-spacing: 2.5px;
+                font-weight: bold;
+            }
+            h2 {
+                font-size: 0.88rem;
+                font-weight: 400;
+                margin-bottom: 1.1rem;
+                letter-spacing: 0;
+                color: var(--accent);
+                opacity: 1;
+            }
+            p,
+            .post-card p,
+            .post-card div[style],
+            blockquote {
+                font-family: var(--font-body);
+                font-weight: 400;
+            }
+            p {
+                color: #b8bec8;
+                font-size: 0.95rem;
+                line-height: 1.75;
+                margin-bottom: 0.9rem;
+            }
+            body.amber p {
+                color: #c8a870;
+            }
+
+            /* experience / post-card description text */
+            .post-card p,
+            .post-card div[style] {
+                font-size: 0.88rem !important;
+                line-height: 1.75 !important;
+                color: #a8b0bc !important;
+            }
+
+            /* experience entry text styling */
+            .post-card > div:not(.post-date):not(.post-title) {
+                font-family: var(--font-body);
+                font-weight: 400;
+                color: #a0a8b4;
+                font-size: 0.88rem;
+                line-height: 1.75;
+            }
+
+            [id^="skills-"] {
+                font-family: var(--font-mono);
+            }
+
+            /* ── SKILLS ── */
+            .skill-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+            }
+            .skill-item {
+                border: 1px solid var(--border);
+                background: var(--surface);
+                padding: 0.4rem 0.75rem;
+                font-family: var(--font-body);
+                font-size: 0.82rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #b0b8c4;
+                font-size: 0.84rem;
+                transition:
+                    border-color 0.15s,
+                    background 0.15s;
+            }
+            .skill-item:hover {
+                border-color: var(--accent);
+                background: var(--surface-hover);
+                color: #c8cdd4;
+            }
+            .skill-item::before {
+                content: ">";
+                color: var(--accent);
+                opacity: 0.7;
+            }
+
+            /* ── SERVICES ── */
+            .service-list {
+                list-style: none;
+                margin-top: 0.5rem;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+                gap: 0 1.5rem;
+            }
+            .service-list li {
+                padding: 0.35rem 0;
+                border-bottom: 1px solid var(--border);
+                font-size: 0.88rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .service-list li:last-child {
+                border-bottom: none;
+            }
+            .badge {
+                font-size: 0.68rem;
+                padding: 0.1rem 0.5rem;
+                border: 1px solid var(--border);
+                color: var(--dim-green);
+                text-shadow: none;
+                background: var(--surface);
+            }
+            .badge.up {
+                border-color: color-mix(in srgb, var(--pw-accent) 35%, var(--border));
+                color: var(--pw-accent);
+                background: color-mix(in srgb, var(--pw-accent) 12%, transparent);
+            }
+
+            .uptime-label {
+                margin-top: 1rem;
+                font-size: 0.75rem;
+                color: var(--dim-green);
+            }
+            .uptime-bar {
+                display: flex;
+                gap: 2px;
+                margin-top: 0.4rem;
+            }
+            .uptime-block {
+                width: 12px;
+                height: 18px;
+                background: var(--green);
+                opacity: 0.7;
+            }
+            .uptime-block.down {
+                background: #ff3333;
+            }
+
+            /* ── BLOG ── */
+            .post-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+                gap: 0.75rem;
+                margin-top: 0.5rem;
+            }
+            .post-card {
+                border: 1px solid var(--border);
+                background: var(--surface);
+                padding: 1.1rem 1.4rem;
+                transition:
+                    border-color 0.15s,
+                    background 0.15s;
+                cursor: pointer;
+            }
+            .post-card:hover {
+                border-color: var(--accent);
+                background: var(--surface-hover);
+            }
+            .post-date {
+                font-family: var(--font-mono);
+                font-size: 0.72rem;
+                color: var(--accent);
+                margin-bottom: 0.4rem;
+                letter-spacing: 0.5px;
+            }
+            .post-title {
+                font-family: var(--font-display);
+                font-size: 0.92rem;
+                font-weight: 600;
+                color: #d0d6df;
+                line-height: 1.5;
+            }
+
+            /* ── NETWORK MAP ── */
+            #network-map {
+                width: 100%;
+                overflow-x: auto;
+                padding-top: 0.5rem;
+            }
+            .net-layer {
+                margin-bottom: 1.2rem;
+            }
+            .net-layer-title {
+                font-size: 0.72rem;
+                color: var(--dim-green);
+                margin-bottom: 0.5rem;
+                letter-spacing: 1px;
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 0.25rem;
+            }
+            .net-nodes {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .net-node {
+                border: 1px solid var(--border);
+                padding: 0.3rem 0.7rem;
+                font-size: 0.78rem;
+                position: relative;
+                cursor: default;
+                transition:
+                    border-color 0.2s,
+                    background 0.2s;
+                min-width: 130px;
+                text-align: center;
+            }
+            .net-node:hover {
+                border-color: var(--green);
+                background: var(--surface-hover);
+            }
+            .net-node .ip {
+                font-size: 0.68rem;
+                color: var(--dim-green);
+                display: block;
+            }
+            .net-node.router {
+                border-color: var(--green);
+            }
+            .net-node.storage {
+                border-color: #33aaff;
+                color: #33aaff;
+                text-shadow: 0 0 6px rgba(51, 170, 255, 0.5);
+            }
+            body.amber .net-node.storage {
+                border-color: #ff8c00;
+                color: #ff8c00;
+            }
+            .net-node.cloud {
+                border-color: #aa33ff;
+                color: #aa33ff;
+                text-shadow: 0 0 6px rgba(170, 51, 255, 0.5);
+            }
+            .net-node.vm {
+                border-color: #ffdd33;
+                color: #ffdd33;
+                text-shadow: 0 0 6px rgba(255, 221, 51, 0.5);
+            }
+            .net-node.vlan {
+                border-color: var(--dim-green);
+                font-size: 0.72rem;
+                min-width: 80px;
+            }
+
+            /* ── TERMINAL ── */
+            #tbox,
+            #tbox * {
+                font-family: var(--font-mono) !important;
+            }
+            #tbox {
+                background: var(--terminal-bg);
+                border: 1px solid var(--border);
+                border-top: 2px solid var(--accent);
+                padding: 1rem 1.2rem;
+                font-size: 0.88rem;
+                min-height: 220px;
+                max-height: 320px;
+                overflow-y: auto;
+                cursor: text;
+                box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+            }
+            #tbox:focus-within {
+                border-color: var(--accent);
+                box-shadow:
+                    inset 0 0 40px rgba(0, 0, 0, 0.5),
+                    0 0 0 1px rgba(45, 212, 191, 0.25);
+            }
+            #tout {
+                white-space: pre-wrap;
+                word-break: break-all;
+                color: #9ca3af;
+                font-size: 0.88rem;
+            }
+            #term-output {
+                flex: 1;
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+            .term-input-row {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                margin-top: 0.5rem;
+            }
+            .term-prompt {
+                color: var(--accent);
+                white-space: nowrap;
+            }
+            #term-input {
+                background: transparent;
+                border: none;
+                outline: none;
+                color: #e8eaf0;
+                font-family: inherit;
+                font-size: inherit;
+                flex: 1;
+                caret-color: var(--accent);
+                min-width: 200px;
+            }
+
+            /* ── CONTACT ── */
+            .contact-line {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                padding: 0.5rem 0;
+                font-family: var(--font-body);
+                font-size: 0.95rem;
+                border-bottom: 1px solid var(--border);
+            }
+            .contact-line:last-child {
+                border-bottom: none;
+            }
+            .contact-label {
+                color: var(--accent);
+                min-width: 120px;
+                opacity: 0.85;
+            }
+            .contact-line a {
+                color: #9ca3af;
+                text-decoration: none;
+                transition: color 0.15s;
+            }
+            .contact-line a:hover {
+                color: var(--accent);
+                text-decoration: none;
+            }
+
+            /* ── FOOTER ── */
+            footer {
+                border-top: 1px solid var(--border);
+                padding-top: 1rem;
+                font-family: var(--font-body);
+                font-size: 0.72rem;
+                color: #3a4050;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            /* scrollbar */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: var(--bg);
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--dim-green);
+            }
+
+            .vbtn.active {
+                border-color: var(--accent) !important;
+                color: var(--accent) !important;
+                background: var(--surface-active) !important;
+            }
+
+            #rag-box,
+            #rag-box * {
+                font-family: var(--font-mono) !important;
+            }
+            #rag-input {
+                font-family: var(--font-mono) !important;
+            }
+            /* ── LIGHT MODE ── */
+            body.light {
+                --green: #2d3748;
+                --dim-green: #718096;
+                --accent: #0d9488;
+                --accent2: #c04a00;
+                --bg: #f5f7f6;
+                --terminal-bg: #eef2f1;
+                --surface: color-mix(in srgb, #1a202c 3%, transparent);
+                --surface-hover: color-mix(in srgb, #0d9488 8%, transparent);
+                --surface-active: color-mix(in srgb, #0d9488 12%, transparent);
+                --surface-nav: color-mix(in srgb, #0d9488 5%, transparent);
+                --card-bg: var(--surface);
+                --border: #d1d5db;
+                --glow: rgba(13, 148, 136, 0.15);
+                background-color: #f5f7f6;
+                color: #2d3748;
+            }
+            body.light header {
+                background: linear-gradient(135deg, rgba(13,148,136,0.06) 0%, rgba(245,247,246,0) 60%);
+                box-shadow: inset 0 1px 0 rgba(13,148,136,0.2), 0 4px 24px rgba(0,0,0,0.08);
+            }
+            body.light header::before { background: var(--bg); }
+            body.light .section { background: var(--surface); }
+            body.light .section-label { background: var(--bg); }
+            body.light nav { background: var(--surface-nav); }
+
+            /* Post-cards & case study cards */
+            body.light .post-card,
+            body.light .post-card div,
+            body.light .post-card p,
+            body.light .post-card span[style],
+            body.light .post-card div[style] {
+                background: var(--surface) !important;
+                color: #374151 !important;
+            }
+            body.light .post-card:hover {
+                border-color: var(--accent);
+                background: var(--surface-hover) !important;
+            }
+            body.light .post-title { color: #1a202c !important; }
+            body.light .post-date { color: var(--accent) !important; }
+
+            /* Skill items */
+            body.light .skill-item {
+                background: var(--surface) !important;
+                color: #374151 !important;
+                border-color: #d1d5db;
+            }
+            body.light .skill-item:hover { color: #1a202c !important; }
+
+            /* About section cards (inline-style divs with skill grids) */
+            body.light .section > div > div[style],
+            body.light .section > div > div > div[style] {
+                background: var(--surface) !important;
+                color: #374151 !important;
+            }
+
+            /* Service list */
+            body.light .service-list li { color: #374151; }
+            body.light .badge { background: var(--surface); color: #6b7280; }
+            body.light .badge.up { color: var(--accent); background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+
+            /* Network map nodes */
+            body.light .net-node { background: var(--surface); }
+            body.light .net-node .ip { color: #718096; }
+
+            /* Terminal */
+            body.light #tbox {
+                background: var(--terminal-bg) !important;
+                border-color: #cbd5e1 !important;
+                border-top-color: var(--accent) !important;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.04) !important;
+            }
+            body.light #tout { color: #374151 !important; }
+            body.light #tout div { color: #374151 !important; }
+            body.light #term-output { color: #374151 !important; }
+            body.light #term-output div { color: #374151 !important; }
+            body.light #term-input {
+                color: #1a202c !important;
+                caret-color: var(--accent) !important;
+            }
+            body.light .term-prompt { color: var(--accent) !important; }
+
+            /* RAG box — inline style #080810 nadpisywany przez !important */
+            body.light #rag-box {
+                background: var(--terminal-bg) !important;
+                border-color: #cbd5e1 !important;
+                border-top-color: var(--accent) !important;
+            }
+            body.light #rag-out { color: #374151 !important; }
+            body.light #rag-out *,
+            body.light #rag-out div,
+            body.light #rag-out span,
+            body.light #rag-out p { color: #374151 !important; }
+            /* Nadpisanie koloru wiadomości powitalnej i odpowiedzi */
+            body.light #rag-out div[style*="color: #6b7280"],
+            body.light #rag-out div[style*="color:#6b7280"] { color: #4a5568 !important; }
+            body.light #rag-out div[style*="color: #e8a020"],
+            body.light #rag-out div[style*="color:#e8a020"] { color: var(--accent) !important; }
+            body.light #rag-out div[style*="color: #9ca3af"],
+            body.light #rag-out div[style*="color:#9ca3af"] { color: #374151 !important; }
+            body.light #rag-out div[style*="color: #ef4444"],
+            body.light #rag-out div[style*="color:#ef4444"] { color: #dc2626 !important; }
+            /* Input row w sekcji RAG */
+            body.light #rag-input {
+                background: #ffffff !important;
+                color: #1a202c !important;
+                border-color: #cbd5e1 !important;
+                caret-color: var(--accent) !important;
+            }
+            body.light #rag-btn {
+                border-color: var(--accent) !important;
+                color: var(--accent) !important;
+                background: var(--surface-active) !important;
+            }
+
+            /* General text */
+            body.light p { color: #4a5568 !important; }
+            body.light h1 { color: #1a202c; }
+            body.light .tagline { color: #4a5568; }
+            body.light .contact-line a { color: #4a5568; }
+            body.light .contact-line a:hover { color: var(--accent); }
+            body.light footer { color: #9ca3af; }
+
+            /* Experience cards */
+            body.light .post-card > div:not(.post-date):not(.post-title) {
+                color: #374151 !important;
+            }
+
+            /* Hardcoded color overrides for inline-styled elements */
+            body.light [style*="color: #ccffcc"],
+            body.light [style*="color:#ccffcc"] { color: #374151 !important; }
+            body.light [style*="color: #a8b0bc"],
+            body.light [style*="color:#a8b0bc"] { color: #374151 !important; }
+            body.light [style*="color: #b8bec8"],
+            body.light [style*="color:#b8bec8"] { color: #4a5568 !important; }
+            body.light [style*="color: #d0d6df"],
+            body.light [style*="color:#d0d6df"] { color: #1a202c !important; }
+            body.light [style*="color: #9ca3af"],
+            body.light [style*="color:#9ca3af"] { color: #4a5568 !important; }
+            body.light [style*="color: #c8cdd4"],
+            body.light [style*="color:#c8cdd4"] { color: #2d3748 !important; }
+
+            /* ── THEME TOGGLE BUTTON ── */
+            #theme-toggle {
+                background: transparent;
+                border: none;
+                border-left: 1px solid var(--border);
+                color: var(--dim-green);
+                font-family: var(--font-body);
+                font-size: 0.78rem;
+                padding: 0.5rem 1rem;
+                cursor: pointer;
+                letter-spacing: 0.5px;
+                transition: all 0.15s;
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                flex-shrink: 0;
+            }
+            #theme-toggle:hover {
+                color: var(--accent);
+                background: var(--surface-hover);
+            }
+            body { transition: background-color 0.35s, color 0.35s; }
+
+            /* ── LANG TOGGLE ── */
+            #lang-toggle {
+                background: transparent;
+                border: none;
+                border-left: 1px solid var(--border);
+                color: var(--dim-green);
+                font-family: var(--font-body);
+                font-size: 0.78rem;
+                padding: 0.5rem 1rem;
+                cursor: pointer;
+                letter-spacing: 0.5px;
+                transition: all 0.15s;
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            #lang-toggle:hover {
+                color: var(--accent2);
+                background: color-mix(in srgb, var(--pw-warm) 8%, transparent);
+            }
+        </style>
+    </head>
+    <body>
+        <!-- MATRIX -->
+        <canvas id="matrix-canvas"></canvas>
+        <div id="matrix-exit">[ ESC / kliknij aby wyjsc ]</div>
+
+        <!-- BOOT -->
+        <div id="boot-screen"><div id="boot-lines"></div></div>
+
+        <!-- MAIN -->
+        <div id="main">
+            <div class="container">
+                <header>
+                    <div class="prompt-line" id="header-prompt">
+                        <span id="header-prompt-text"></span
+                        ><span id="header-prompt-cursor" class="cursor"></span>
+                    </div>
+                    <h1 id="header-name" style="visibility: hidden">
+                        KRZYSZTOF GAWKOWSKI<span class="cursor"></span>
+                    </h1>
+                    <div
+                        class="tagline"
+                        id="header-tagline"
+                        style="visibility: hidden"
+                    >
+                        IT Infrastructure &nbsp;&middot;&nbsp; Security
+                        &nbsp;&middot;&nbsp; Virtualization &nbsp;&middot;&nbsp;
+                        Linux &nbsp;&middot;&nbsp; Windows &nbsp;&middot;&nbsp;
+                        Networking &nbsp;&middot;&nbsp; Cloud &amp; Automation
+                        &nbsp;&middot;&nbsp; Backup
+                    </div>
+                </header>
+
+                <nav>
+                    <a href="#about" class="active" id="nav-home">[HOME]</a>
+                    <a href="#casestudy" id="nav-case">[CASE STUDY]</a>
+                    <a href="#experience" id="nav-exp">[EXPERIENCE]</a>
+                    <a
+                        href="homelab.html"
+                        target="_blank"
+                        style="color: var(--accent); border-left: 1px solid var(--border)"
+                        >[HOMELAB]</a
+                    >
+                    <a href="#terminal" id="nav-terminal">[ASK CV]</a>
+                    <a href="#contact" id="nav-contact">[KONTAKT]</a>
+                    <span
+                        id="clk"
+                        style="
+                            margin-left: auto;
+                            padding: 0.5rem 1.2rem;
+                            font-size: 0.82rem;
+                            color: #e8a020;
+                            border-left: 1px solid var(--border);
+                            white-space: nowrap;
+                            flex-shrink: 0;
+                            display: flex;
+                            align-items: center;
+                        "
+                    ></span>
+                    <button id="theme-toggle" onclick="toggleTheme()" title="Przełącz tryb jasny/ciemny">
+                        <span id="theme-icon">☀</span><span id="theme-label">LIGHT</span>
+                    </button>
+                    <button id="lang-toggle" onclick="toggleLang()" title="Switch language / Zmień język">[EN]</button>
+                </nav>
+
+                <div class="section" id="about">
+                    <span class="section-label" id="about-label">// ABOUT</span>
+                    <h2>$ cat about.txt</h2>
+                    <p id="about-p1">
+                        Planuję, buduję, administruję i zabezpieczam środowiska
+                        IT. Specjalizuję się w tożsamości, wirtualizacji i
+                        bezpieczeństwie operacyjnym — w środowiskach Windows,
+                        Linux i hybrydowych.
+                    </p>
+                    <p id="about-p2">
+                        Pracuję na styku infrastruktury, tożsamości i
+                        bezpieczeństwa operacyjnego. Tworzę środowiska IT
+                        działające bez awarii i zagrożeń — od kilkudziesięciu do
+                        kilkuset użytkowników.
+                    </p>
+                    <div
+                        style="
+                            display: grid;
+                            grid-template-columns: repeat(
+                                auto-fill,
+                                minmax(420px, 1fr)
+                            );
+                            gap: 1rem;
+                            margin-top: 0.75rem;
+                        "
+                    >
+                        <div
+                            style="
+                                border: 1px solid var(--border);
+                                background: var(--surface);
+                                padding: 0.9rem 1.1rem;
+                            "
+                        >
+                            <div
+                                style="
+                                    color: var(--accent);
+                                    font-size: 0.72rem;
+                                    letter-spacing: 2px;
+                                    margin-bottom: 0.6rem;
+                                    border-bottom: 1px solid var(--border);
+                                    padding-bottom: 0.4rem;
+                                "
+                            >
+                                <span id="skills-virt">SYSTEMY I WIRTUALIZACJA</span>
+                            </div>
+                            <div
+                                class="skill-grid"
+                                style="
+                                    grid-template-columns: repeat(
+                                        auto-fill,
+                                        minmax(155px, 1fr)
+                                    );
+                                    gap: 0.35rem;
+                                "
+                            >
+                                <div class="skill-item">VMware vSphere</div>
+                                <div class="skill-item">vCenter / ESXi</div>
+                                <div class="skill-item">Proxmox VE</div>
+                                <div class="skill-item">Hyper-V</div>
+                                <div class="skill-item">Linux Debian</div>
+                                <div class="skill-item">Ubuntu / OpenSUSE</div>
+                                <div class="skill-item">Windows Server</div>
+                                <div class="skill-item">Active Directory</div>
+                                <div class="skill-item">GPO / Entra ID</div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="
+                                border: 1px solid var(--border);
+                                background: var(--surface);
+                                padding: 0.9rem 1.1rem;
+                            "
+                        >
+                            <div
+                                style="
+                                    color: var(--accent);
+                                    font-size: 0.72rem;
+                                    letter-spacing: 2px;
+                                    margin-bottom: 0.6rem;
+                                    border-bottom: 1px solid var(--border);
+                                    padding-bottom: 0.4rem;
+                                "
+                            >
+                                <span id="skills-backup">BACKUP I BEZPIECZEŃSTWO</span>
+                            </div>
+                            <div
+                                class="skill-grid"
+                                style="
+                                    grid-template-columns: repeat(
+                                        auto-fill,
+                                        minmax(155px, 1fr)
+                                    );
+                                    gap: 0.35rem;
+                                "
+                            >
+                                <div class="skill-item">Veeam B&amp;R</div>
+                                <div class="skill-item">TrueNAS / ZFS</div>
+                                <div class="skill-item">ESET Protect</div>
+                                <div class="skill-item">Symantec SEP</div>
+                                <div class="skill-item">Tenable SCCV</div>
+                                <div class="skill-item">WAZUH SIEM</div>
+                                <div class="skill-item">CIS Benchmarks</div>
+                                <div class="skill-item">ISO 27001 / NIS2</div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="
+                                border: 1px solid var(--border);
+                                background: var(--surface);
+                                padding: 0.9rem 1.1rem;
+                            "
+                        >
+                            <div
+                                style="
+                                    color: var(--accent);
+                                    font-size: 0.72rem;
+                                    letter-spacing: 2px;
+                                    margin-bottom: 0.6rem;
+                                    border-bottom: 1px solid var(--border);
+                                    padding-bottom: 0.4rem;
+                                "
+                            >
+                                <span id="skills-infra">INFRASTRUKTURA I ZARZĄDZANIE</span>
+                            </div>
+                            <div
+                                class="skill-grid"
+                                style="
+                                    grid-template-columns: repeat(
+                                        auto-fill,
+                                        minmax(155px, 1fr)
+                                    );
+                                    gap: 0.35rem;
+                                "
+                            >
+                                <div class="skill-item">pfSense / Netgate</div>
+                                <div class="skill-item">Fortinet FortiGate</div>
+                                <div class="skill-item">VyOS</div>
+                                <div class="skill-item">Dell EMC PowerEdge</div>
+                                <div class="skill-item">NetApp FAS / OnTap</div>
+                                <div class="skill-item">QNAP QTS</div>
+                                <div class="skill-item">Synology DSM</div>
+                                <div class="skill-item">Terraform</div>
+                                <div class="skill-item">Ansible</div>
+                                <div class="skill-item">Cloudflare / DNS</div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="
+                                border: 1px solid var(--border);
+                                background: var(--surface);
+                                padding: 0.9rem 1.1rem;
+                            "
+                        >
+                            <div
+                                style="
+                                    color: var(--accent);
+                                    font-size: 0.72rem;
+                                    letter-spacing: 2px;
+                                    margin-bottom: 0.6rem;
+                                    border-bottom: 1px solid var(--border);
+                                    padding-bottom: 0.4rem;
+                                "
+                            >
+                                <span id="skills-mon">MONITORING · NARZĘDZIA · SKRYPTY</span>
+                            </div>
+                            <div
+                                class="skill-grid"
+                                style="
+                                    grid-template-columns: repeat(
+                                        auto-fill,
+                                        minmax(155px, 1fr)
+                                    );
+                                    gap: 0.35rem;
+                                "
+                            >
+                                <div class="skill-item">Zabbix</div>
+                                <div class="skill-item">GLPI / CMDB</div>
+                                <div class="skill-item">JIRA / Confluence</div>
+                                <div class="skill-item">Uniflow / SafeQ</div>
+                                <div class="skill-item">Bash</div>
+                                <div class="skill-item">PowerShell</div>
+                                <div class="skill-item">Python</div>
+                                <div class="skill-item">Docker / LXC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CASE STUDY -->
+                <div class="section" id="casestudy">
+                    <span class="section-label" id="casestudy-label">// CASE STUDY</span>
+                    <h2>$ ls -lt /projects/</h2>
+                    <div
+                        style="
+                            display: grid;
+                            grid-template-columns: repeat(
+                                auto-fill,
+                                minmax(380px, 1fr)
+                            );
+                            gap: 1rem;
+                            margin-top: 0.5rem;
+                        "
+                    >
+                        <div class="post-card" id="cs-card-1">
+                            <div class="post-date" style="color: var(--green)">
+                                SECURITY · SIEM
+                            </div>
+                            <div
+                                class="post-title" id="cs1-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Wdrożenie SIEM — WAZUH" data-en="SIEM Deployment — WAZUH"
+                            >
+                                Wdrożenie SIEM — WAZUH
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Budowa usługi SIEM/SOC w oparciu o WAZUH w
+                                środowisku wirtualnym (VM) obsługującego
+                                <span style="color: var(--green)"
+                                    >prawie setkę agentów</span
+                                >
+                                — stacje robocze, serwery Windows i Linux.
+                                Konfiguracja reguł korelacji zdarzeń, alertów
+                                bezpieczeństwa oraz integracja z pipeline'em
+                                logów. System działa jako centralny punkt
+                                widoczności zagrożeń w organizacji.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">WAZUH</span
+                                ><span class="badge up">SIEM</span
+                                ><span class="badge up">VM Cluster</span
+                                ><span class="badge up">78 agentów</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-2">
+                            <div class="post-date" style="color: var(--green)">
+                                ITSM · CMDB
+                            </div>
+                            <div
+                                class="post-title" id="cs2-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Automatyczna inwentaryzacja infrastruktury —
+                                GLPI" data-en="Automated Infrastructure Inventory — GLPI"
+                            >
+                                Automatyczna inwentaryzacja infrastruktury —
+                                GLPI
+                            </div>
+                            <div id="cs2-desc"
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Wdrożenie agentowego systemu inwentaryzacji
+                                GLPI, który automatycznie zczytuje konfigurację
+                                sprzętu, oprogramowania i zasobów sieciowych
+                                bezpośrednio z endpointów. Na bazie zebranych
+                                danych zbudowana została
+                                <span style="color: var(--green)"
+                                    >baza CMDB</span
+                                >
+                                — fundament zarządzania zasobami IT i obsługi
+                                zgłoszeń serwisowych.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">GLPI</span
+                                ><span class="badge up">CMDB</span
+                                ><span class="badge up">Agenty</span
+                                ><span class="badge up">Inwentaryzacja</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-3">
+                            <div class="post-date" style="color: var(--green)">
+                                MONITORING · OBSERVABILITY
+                            </div>
+                            <div
+                                class="post-title" id="cs3-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Wdrożenie monitoringu ZABBIX — migracja z PRTG" data-en="ZABBIX Monitoring Deployment — Migration from PRTG"
+                            >
+                                Wdrożenie monitoringu ZABBIX — migracja z PRTG
+                            </div>
+                            <div id="cs3-desc"
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Uruchomienie środowiska ZABBIX jako docelowej
+                                platformy monitoringu infrastruktury.
+                                Przeprowadzona
+                                <span style="color: var(--green)"
+                                    >migracja sensorów z PRTG</span
+                                >
+                                — mapowanie szablonów, odtworzenie logiki
+                                alertów i dashboardów. Wynik: pełna widoczność
+                                infrastruktury w jednym miejscu z niższym
+                                kosztem licencyjnym.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">ZABBIX</span
+                                ><span class="badge up">PRTG</span
+                                ><span class="badge up">Migracja</span
+                                ><span class="badge up">Monitoring</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-4">
+                            <div class="post-date" style="color: var(--green)">
+                                IDENTITY · SECURITY
+                            </div>
+                            <div
+                                class="post-title" id="cs4-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Tierowanie Active Directory + CIS Hardening" data-en="Active Directory Tiering + CIS Hardening"
+                            >
+                                Tierowanie Active Directory + CIS Hardening
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Wdrożenie modelu
+                                <span style="color: var(--green)"
+                                    >Tier 0 / Tier 1 / Tier 2</span
+                                >
+                                w środowisku Active Directory zgodnie z
+                                wytycznymi Microsoft. Równoległa implementacja
+                                kontrolek bezpieczeństwa CIS Benchmarks dla
+                                Windows Server i AD — polityki haseł, GPO
+                                hardening, ograniczenie lateral movement. Wynik:
+                                znaczące ograniczenie powierzchni ataku.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">AD Tiering</span
+                                ><span class="badge up">CIS Benchmarks</span
+                                ><span class="badge up">GPO</span
+                                ><span class="badge up">Hardening</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-5">
+                            <div class="post-date" style="color: var(--green)">
+                                COMPLIANCE · GOVERNANCE
+                            </div>
+                            <div
+                                class="post-title" id="cs5-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Dokumentacja SZBI / NIS2 dla Zarządu" data-en="ISMS / NIS2 Documentation for Management"
+                            >
+                                Dokumentacja SZBI / NIS2 dla Zarządu
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Opracowanie kompletnej dokumentacji Systemu
+                                Zarządzania Bezpieczeństwem Informacji zgodnej z
+                                <span style="color: var(--green)"
+                                    >normą ISO/IEC 27001</span
+                                >
+                                oraz wymaganiami dyrektywy NIS2. Pakiet
+                                dokumentów przygotowany z myślą o Zarządzie:
+                                polityki, procedury, analiza ryzyka, plan
+                                ciągłości działania — gotowy do audytu.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">ISO 27001</span
+                                ><span class="badge up">NIS2</span
+                                ><span class="badge up">SZBI</span
+                                ><span class="badge up">Dokumentacja</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-6">
+                            <div class="post-date" style="color: var(--green)">
+                                INFRASTRUCTURE · BACKUP
+                            </div>
+                            <div
+                                class="post-title" id="cs6-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Budowa środowiska backupu — TrueNAS + ZFS
+                                Replication" data-en="Backup Environment — TrueNAS + ZFS Replication"
+                            >
+                                Budowa środowiska backupu — TrueNAS + ZFS
+                                Replication
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Projektowanie i wdrożenie architektury backupu
+                                opartej na
+                                <span style="color: var(--green)"
+                                    >TrueNAS SCALE</span
+                                >
+                                z replikacją ZFS do lokalizacji air-gap.
+                                Polityki migawek, harmonogram replikacji,
+                                testowanie przywracania danych. Rozwiązanie
+                                zapewnia ochronę przed ransomware i spełnia
+                                wymogi RTO/RPO organizacji.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">TrueNAS</span
+                                ><span class="badge up">ZFS</span
+                                ><span class="badge up">Air-gap</span
+                                ><span class="badge up">Backup</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-7">
+                            <div class="post-date" style="color: var(--green)">
+                                MONITORING · AUTOMATION
+                            </div>
+                            <div
+                                class="post-title" id="cs7-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Automatyczny pipeline telemetrii i raportów AI —
+                                OpenObserve + n8n" data-en="Automated AI Telemetry & Reporting Pipeline — OpenObserve + n8n"
+                            >
+                                Automatyczny pipeline telemetrii i raportów AI —
+                                OpenObserve + n8n
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Budowa dziennego pipeline'u, który zbiera logi i
+                                metryki z
+                                <span style="color: var(--green)"
+                                    >Proxmox, LXC, VM oraz VyOS</span
+                                >
+                                (OTel, syslog) do OpenObserve, a następnie
+                                przetwarza je w n8n. Zdarzenia są agregowane i
+                                przekazywane do modelu AI, który generuje
+                                opisowy raport stanu infrastruktury wysyłany
+                                e&#8209;mailem — całość działa w pełni
+                                bezobsługowo.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">OpenTelemetry</span
+                                ><span class="badge up">OpenObserve</span
+                                ><span class="badge up">n8n</span
+                                ><span class="badge up">AI Ops</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-8">
+                            <div class="post-date" style="color: var(--green)">
+                                AUTOMATION · PATCHING
+                            </div>
+                            <div
+                                class="post-title" id="cs8-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Orkiestracja patchowania VM/LXC — Ansible +
+                                Semaphore + Proxmox" data-en="VM/LXC Patch Orchestration — Ansible + Semaphore + Proxmox"
+                            >
+                                Orkiestracja patchowania VM/LXC — Ansible +
+                                Semaphore + Proxmox
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Wdrożenie centralnego systemu patch managementu
+                                dla
+                                <span style="color: var(--green)"
+                                    >Debian, RHEL, Alpine LXC i Windows</span
+                                >
+                                z integracją Ansible, Semaphore i Proxmox API.
+                                Przed aktualizacją tworzony jest snapshot,
+                                następnie wykonywany patching w trybie security
+                                lub full, a osobny harmonogram usuwa snapshoty
+                                starsze niż 48 godzin, z notyfikacjami
+                                e&#8209;mail po zakończeniu.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">Ansible</span
+                                ><span class="badge up">Semaphore</span
+                                ><span class="badge up">Proxmox</span
+                                ><span class="badge up">Patch Management</span>
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="cs-card-9">
+                            <div class="post-date" style="color: var(--green)">
+                                IDENTITY · SECURITY
+                            </div>
+                            <div
+                                class="post-title" id="cs9-title"
+                                style="font-size: 0.95rem; margin: 0.4rem 0"
+                                data-pl="Automatyzacja BitLocker z backupem kluczy do AD
+                                — GPO + PowerShell" data-en="BitLocker Automation with AD Key Backup — GPO + PowerShell"
+                            >
+                                Automatyzacja BitLocker z backupem kluczy do AD
+                                — GPO + PowerShell
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.84rem;
+                                    line-height: 1.75;
+                                "
+                            >
+                                Konfiguracja
+                                <span style="color: var(--green)"
+                                    >GPO wymuszającej polityki BitLocker</span
+                                >
+                                i zapis kluczy odzyskiwania do Active Directory
+                                oraz skryptu PowerShell uruchamianego na starcie
+                                systemu. Skrypt weryfikuje stan dysków,
+                                uruchamia szyfrowanie na niezaszyfrowanych
+                                woluminach i wykonuje backup kluczy do obiektu
+                                komputera w AD, bez potrzeby użycia Intune ani
+                                SCCM.
+                            </div>
+                            <div
+                                style="
+                                    margin-top: 0.75rem;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 0.4rem;
+                                "
+                            >
+                                <span class="badge up">BitLocker</span
+                                ><span class="badge up">Active Directory</span
+                                ><span class="badge up">GPO</span
+                                ><span class="badge up">PowerShell</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPERIENCE -->
+                <div class="section" id="experience">
+                    <span class="section-label" id="exp-label"
+                        >// PROFESSIONAL EXPERIENCE</span
+                    >
+                    <h2>$ cat /etc/cv/experience.conf</h2>
+
+                    <div
+                        style="
+                            display: grid;
+                            grid-template-columns: repeat(
+                                auto-fill,
+                                minmax(420px, 1fr)
+                            );
+                            gap: 1rem;
+                            margin-top: 0.5rem;
+                        "
+                    >
+                        <div class="post-card" id="exp-card-1">
+                            <div class="post-date">01.2025 — obecnie</div>
+                            <div
+                                class="post-title" id="exp1-title" data-pl="Senior Administrator IT" data-en="Senior IT Administrator"
+                                style="font-size: 1rem; margin-bottom: 0.4rem"
+                            >
+                                Senior Administrator IT
+                            </div>
+                            <div
+                                style="
+                                    color: var(--dim-green);
+                                    font-size: 0.82rem;
+                                    margin-bottom: 0.5rem;
+                                "
+                                id="exp1-env" data-pl="Środowisko hybrydowe · 650+ użytkowników" data-en="Hybrid environment · 650+ users"
+                            >
+                                Środowisko hybrydowe · 650+ użytkowników
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.85rem;
+                                    line-height: 1.7;
+                                "
+                                id="exp1-desc" data-pl="&gt; Zarządzanie infrastrukturą IT wielu
+                                podmiotów, on-prem i chmura MS<br />
+                                &gt; Bezpieczeństwo operacyjne, zgodność z NIS2
+                                i ISO 27001" data-en="&gt; Managing IT infrastructure for multiple entities, on-prem and MS cloud<br />
+                                &gt; Operational security, compliance with NIS2 and ISO 27001"
+                            >
+                                &gt; Zarządzanie infrastrukturą IT wielu
+                                podmiotów, on-prem i chmura MS<br />
+                                &gt; Bezpieczeństwo operacyjne, zgodność z NIS2
+                                i ISO 27001
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="exp-card-2">
+                            <div class="post-date">12.2023 — 12.2025</div>
+                            <div
+                                class="post-title" id="exp2-title" data-pl="Administrator Systemów IT" data-en="IT Systems Administrator"
+                                style="font-size: 1rem; margin-bottom: 0.4rem"
+                            >
+                                Administrator Systemów IT
+                            </div>
+                            <div
+                                style="
+                                    color: var(--dim-green);
+                                    font-size: 0.82rem;
+                                    margin-bottom: 0.5rem;
+                                "
+                                id="exp2-env" data-pl="Środowisko enterprise · Active Directory · CIS /
+                                CVE" data-en="Enterprise environment · Active Directory · CIS / CVE"
+                            >
+                                Środowisko enterprise · Active Directory · CIS /
+                                CVE
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.85rem;
+                                    line-height: 1.7;
+                                "
+                                id="exp2-desc" data-pl="&gt; Administracja serwerami, hardening,
+                                zarządzanie tożsamością<br />
+                                &gt; Projekty migracyjne i integracja środowisk
+                                IT w grupie kapitałowej" data-en="&gt; Server administration, hardening, identity management<br />
+                                &gt; Migration projects and IT environment integration in a capital group"
+                            >
+                                &gt; Administracja serwerami, hardening,
+                                zarządzanie tożsamością<br />
+                                &gt; Projekty migracyjne i integracja środowisk
+                                IT w grupie kapitałowej
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="exp-card-3">
+                            <div class="post-date">06.2023 — 12.2023</div>
+                            <div
+                                class="post-title" id="exp3-title" data-pl="Administrator Infrastruktury IT" data-en="IT Infrastructure Administrator"
+                                style="font-size: 1rem; margin-bottom: 0.4rem"
+                            >
+                                Administrator Infrastruktury IT
+                            </div>
+                            <div
+                                style="
+                                    color: var(--dim-green);
+                                    font-size: 0.82rem;
+                                    margin-bottom: 0.5rem;
+                                "
+                                id="exp3-env" data-pl="Linux · Windows · VMware · multi-site" data-en="Linux · Windows · VMware · multi-site"
+                            >
+                                Linux · Windows · VMware · multi-site
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.85rem;
+                                    line-height: 1.7;
+                                "
+                                id="exp3-desc" data-pl="&gt; Utrzymanie i rozbudowa infrastruktury
+                                serwerowej w wielu lokalizacjach<br />
+                                &gt; Wirtualizacja VMware ESXi/vSphere, ciągłość
+                                działania systemów" data-en="&gt; Maintenance and expansion of server infrastructure across multiple sites<br />
+                                &gt; VMware ESXi/vSphere virtualization, system continuity"
+                            >
+                                &gt; Utrzymanie i rozbudowa infrastruktury
+                                serwerowej w wielu lokalizacjach<br />
+                                &gt; Wirtualizacja VMware ESXi/vSphere, ciągłość
+                                działania systemów
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="exp-card-4">
+                            <div class="post-date">11.2021 — 05.2023</div>
+                            <div
+                                class="post-title" id="exp4-title" data-pl="Główny Informatyk / Administrator Techniczny
+                                Systemów" data-en="Lead IT Administrator / Technical Systems Administrator"
+                                style="font-size: 1rem; margin-bottom: 0.4rem"
+                            >
+                                Główny Informatyk / Administrator Techniczny
+                                Systemów
+                            </div>
+                            <div
+                                style="
+                                    color: var(--dim-green);
+                                    font-size: 0.82rem;
+                                    margin-bottom: 0.5rem;
+                                "
+                                id="exp4-env" data-pl="Sektor publiczny · ISO/IEC 27001 / SZBI" data-en="Public sector · ISO/IEC 27001 / ISMS"
+                            >
+                                Sektor publiczny · ISO/IEC 27001 / SZBI
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.85rem;
+                                    line-height: 1.7;
+                                "
+                                id="exp4-desc" data-pl="&gt; Zarządzanie infrastrukturą IT i
+                                bezpieczeństwem informacji<br />
+                                &gt; ATS wg normy ISO/IEC 27001, hardening
+                                serwerów, projekty IT" data-en="&gt; Managing IT infrastructure and information security<br />
+                                &gt; ISMS per ISO/IEC 27001, server hardening, IT projects"
+                            >
+                                &gt; Zarządzanie infrastrukturą IT i
+                                bezpieczeństwem informacji<br />
+                                &gt; ATS wg normy ISO/IEC 27001, hardening
+                                serwerów, projekty IT
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="exp-card-5">
+                            <div class="post-date">01.2019 — 09.2021</div>
+                            <div
+                                class="post-title" id="exp5-title" data-pl="Specjalista IT / Outsourcing B2B" data-en="IT Specialist / B2B Outsourcing"
+                                style="font-size: 1rem; margin-bottom: 0.4rem"
+                            >
+                                Specjalista IT / Outsourcing B2B
+                            </div>
+                            <div
+                                style="
+                                    color: var(--dim-green);
+                                    font-size: 0.82rem;
+                                    margin-bottom: 0.5rem;
+                                "
+                            >
+                                <span id="exp5-env" data-pl="Outsourcing IT · CCTV · SSWiN · WLAN/LAN" data-en="IT Outsourcing · CCTV · SSWiN · WLAN/LAN">Outsourcing IT · CCTV · SSWiN · WLAN/LAN</span>
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.85rem;
+                                    line-height: 1.7;
+                                "
+                            >
+                                &gt; Wsparcie techniczne, sieci, systemy
+                                bezpieczeństwa i CCTV<br />
+                                &gt; Obsługa klientów biznesowych w modelu
+                                outsourcingu IT
+                            </div>
+                        </div>
+
+                        <div class="post-card" id="exp-card-6">
+                            <div class="post-date" style="color: var(--green)">
+                                CERTIFICATIONS &amp; LICENCJE
+                            </div>
+                            <div
+                                style="
+                                    color: #ccffcc;
+                                    font-size: 0.85rem;
+                                    line-height: 1.9;
+                                    margin-top: 0.4rem;
+                                "
+                            >
+                                &gt;
+                                <span style="color: var(--green)">CEH</span> —
+                                Certified Ethical Hacker · EC-Council (2022)<br />
+                                &gt; AZ-900 — Microsoft Azure Fundamentals
+                                (2025)<br />
+                                &gt; ESET Advanced Administration · DAGMA
+                                (2022)<br />
+                                &gt; ESET Management Client Security
+                                Professional (2022)<br />
+                                &gt; Dahua Advanced Training IP Solution
+                                (2018)<br />
+                                &gt; Kwalifikowany pracownik zabezpieczenia
+                                technicznego II° KSP<br />
+                                &gt; Uprawnienia SEP do 1kV [E] · eksploatacja
+                                gr. 1<br />
+                                &gt; Doświadczenie: 9+ lat w środowiskach
+                                produkcyjnych
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAG -->
+                <div class="section" id="terminal">
+                    <span class="section-label" id="ask-label">// ASK MY CV</span>
+                    <h2>
+                        $ ./cv-assistant.py
+                        <span
+                            style="font-size: 0.8rem; color: var(--dim-green)"
+                        >
+                            &mdash; zapytaj o moje CV</span
+                        >
+                    </h2>
+
+                    <div
+                        style="
+                            font-size: 0.82rem;
+                            color: #6b7280;
+                            margin-bottom: 1rem;
+                            line-height: 1.7;
+                        "
+                    >
+                        &gt; <span id="ask-desc">Asystent oparty na AI z dostępem do mojego CV.
+                        Zadaj dowolne pytanie — o doświadczenie, technologie,
+                        certyfikaty.</span>
+                    </div>
+
+                    <!-- Chat window -->
+                    <div
+                        id="rag-box"
+                        style="
+                            background: var(--terminal-bg);
+                            border: 1px solid var(--border);
+                            border-top: 2px solid var(--accent);
+                            min-height: 180px;
+                            max-height: 360px;
+                            overflow-y: auto;
+                            padding: 1rem 1.2rem;
+                            margin-bottom: 0.75rem;
+                            font-size: 0.88rem;
+                        "
+                    >
+                        <div id="rag-out">
+                            <div style="color: #6b7280; white-space: pre-wrap">
+                                &gt; Witaj. Jestem asystentem CV Krzysztofa.
+                                Zadaj mi pytanie o CV.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input row -->
+                    <div
+                        style="display: flex; gap: 0.5rem; align-items: stretch"
+                    >
+                        <span
+                            style="
+                                color: #e8a020;
+                                white-space: nowrap;
+                                display: flex;
+                                align-items: center;
+                                flex-shrink: 0;
+                                font-size: 0.88rem;
+                            "
+                            >visitor@cv:~$&nbsp;</span
+                        >
+                        <input
+                            id="rag-input"
+                            type="text"
+                            autocomplete="off"
+                            spellcheck="false"
+                            placeholder="Zadaj pytanie o CV..."
+                            style="
+                                background: var(--terminal-bg);
+                                border: 1px solid var(--border);
+                                outline: none;
+                                color: #e8eaf0;
+                                font-family:
+                                    &quot;JetBrains Mono&quot;, monospace;
+                                font-size: 0.88rem;
+                                flex: 1;
+                                padding: 0.45rem 0.75rem;
+                                caret-color: #e8a020;
+                            "
+                        />
+                        <button
+                            id="rag-btn"
+                            onclick="ragAsk()"
+                            style="
+                                background: var(--surface-active);
+                                border: 1px solid var(--accent);
+                                color: #e8a020;
+                                font-family:
+                                    &quot;JetBrains Mono&quot;, monospace;
+                                font-size: 0.82rem;
+                                padding: 0.45rem 1rem;
+                                cursor: pointer;
+                                white-space: nowrap;
+                                transition: background 0.15s;
+                                letter-spacing: 1px;
+                            "
+                            onmouseover="
+                                this.style.background = 'rgba(232,160,32,0.2)'
+                            "
+                            onmouseout="
+                                this.style.background = 'rgba(232,160,32,0.1)'
+                            "
+                         id="ask-btn">
+                            [WYŚLIJ]
+                        </button>
+                    </div>
+                    <div
+                        style="
+                            margin-top: 0.5rem;
+                            font-size: 0.7rem;
+                            color: #2a3040;
+                        "
+                    >
+                        <span id="ask-footer">&gt; Odpowiedzi generowane przez GPT-4o-mini na podstawie danych CV &nbsp;·&nbsp; max 400 tokenów</span>
+                    </div>
+                </div>
+
+                <!-- KONTAKT -->
+                <div class="section" id="contact">
+                    <span class="section-label" id="contact-label">// CONTACT</span>
+                    <h2>$ cat /etc/contact.conf</h2>
+                    <div class="contact-line">
+                        <span class="contact-label">LINKEDIN:</span>
+                        <a
+                            href="https://linkedin.com/in/krzysztof-gawkowski"
+                            target="_blank"
+                            >linkedin.com/in/krzysztof-gawkowski</a
+                        >
+                    </div>
+                    <div class="contact-line">
+                        <span class="contact-label" id="contact-website">STRONA WWW:</span>
+                        <a href="https://krzysztofgawkowski.pl" target="_blank"
+                            >krzysztofgawkowski.pl</a
+                        >
+                    </div>
+                    <div class="contact-line">
+                        <span class="contact-label" id="contact-location">LOKALIZACJA:</span>
+                        <span>Warszawa, Mazowsze, PL</span>
+                    </div>
+                    <div class="contact-line">
+                        <span class="contact-label" id="contact-github">GITHUB:</span>
+                        <a href="https://github.com/Kr1sCode" target="_blank" rel="noopener noreferrer"
+                            >github.com/Kr1sCode</a
+                        >
+                    </div>
+                    <div class="contact-line">
+                        <span class="contact-label" id="contact-email">EMAIL:</span>
+                        <a href="mailto:gawkowskimail@gmail.com"
+                            >gawkowskimail@gmail.com</a
+                        >
+                    </div>
+                    <div class="contact-line">
+                        <span class="contact-label" id="contact-phone">TELEFON:</span>
+                        <a href="tel:+48884333222">+48 884-333-222</a>
+                    </div>
+                </div>
+
+                <footer>
+                    <span
+                        >© 2026 Krzysztof Gawkowski ·
+                        krzysztofgawkowski.pl</span
+                    >
+                    <span
+                        ><span id="footer-logout">root@kris-homelab:~$ logout</span><span class="cursor"></span
+                    ></span>
+                </footer>
+            </div>
+            <!-- /container -->
+        </div>
+        <!-- /main -->
+
+        <script>
+            // ── BOOT ──────────────────────────────────────────────────────
+            const bootLines = [
+                "BIOS Version 2.6.1  Copyright (C) 2026",
+                "CPU: Intel Core i5-8500 @ 3.00GHz",
+                "Memory Test: 32768MB OK",
+                "Initializing PCI Bus.............................. [OK]",
+                "",
+                "Loading kernel....................................... [OK]",
+                "Mounting filesystems................................ [OK]",
+                "Starting network interfaces......................... [OK]",
+                "  eth0: 10.0.0.1 UP",
+                "  wg0:  10.0.2.1/24 UP",
+                "Starting VyOS Router................................ [OK]",
+                "Starting Proxmox VE................................. [OK]",
+                "Starting TrueNAS.................................... [OK]",
+                "Starting AdGuard Home............................... [OK]",
+                "Starting Nginx Proxy Manager........................ [OK]",
+                "Starting WireGuard wg0.............................. [OK]",
+                "Starting Cloudflared tunnel......................... [OK]",
+                "Starting UptimeKuma................................. [OK]",
+                "Starting n8n automation............................. [OK]",
+                "",
+                "All services started successfully.",
+                "Homelab infrastructure v7 online.",
+                "",
+                "root@kris-homelab login: kgawkowski",
+                "Password: ••••••••••",
+                "Last login: Wed Jun 17 20:32:11 2026 from 10.0.0.42",
+                "",
+                "Welcome to kris-homelab.",
+                "Loading interface...",
+            ];
+
+            const bootEl = document.getElementById("boot-lines");
+            const bootScr = document.getElementById("boot-screen");
+            const mainEl = document.getElementById("main");
+            let bi = 0;
+
+            function showLine() {
+                if (bi >= bootLines.length) {
+                    setTimeout(function () {
+                        bootScr.classList.add("hidden");
+                        mainEl.classList.add("visible");
+                        startHeaderAnim();
+                        var t = document.getElementById("tin");
+                        if (t) t.focus({ preventScroll: true });
+                        window.scrollTo({ top: 0, behavior: "instant" });
+                    }, 400);
+                    return;
+                }
+                var span = document.createElement("span");
+                span.textContent = bootLines[bi] || " ";
+                bootEl.appendChild(span);
+                bootEl.scrollTop = bootEl.scrollHeight;
+                var delay =
+                    bootLines[bi] === ""
+                        ? 70
+                        : bootLines[bi].indexOf("...") > -1
+                          ? 110
+                          : 35;
+                bi++;
+                setTimeout(showLine, delay);
+            }
+            showLine();
+
+            // ── CLOCK ─────────────────────────────────────────────────────
+            function tick() {
+                var el = document.getElementById("clk");
+                if (!el) return;
+                var n = new Date();
+                var p = function (x) {
+                    return ("0" + x).slice(-2);
+                };
+                el.textContent =
+                    p(n.getDate()) +
+                    "." +
+                    p(n.getMonth() + 1) +
+                    "." +
+                    n.getFullYear() +
+                    "  " +
+                    p(n.getHours()) +
+                    ":" +
+                    p(n.getMinutes()) +
+                    ":" +
+                    p(n.getSeconds());
+            }
+            tick();
+            setInterval(tick, 1000);
+
+            // ── HEADER ANIMATION ──────────────────────────────────────────
+            function startHeaderAnim() {
+                var ptxt = document.getElementById("header-prompt-text");
+                var pcur = document.getElementById("header-prompt-cursor");
+                var nameEl = document.getElementById("header-name");
+                var tagEl = document.getElementById("header-tagline");
+                var cmd = "root@kris-homelab:~$ whoami";
+                var i = 0;
+                pcur.style.display = "inline-block";
+                var t1 = setInterval(function () {
+                    ptxt.textContent = cmd.substring(0, i++);
+                    if (i > cmd.length) {
+                        clearInterval(t1);
+                        setTimeout(function () {
+                            pcur.style.display = "none";
+                            nameEl.style.visibility = "visible";
+                            var full = "KRZYSZTOF GAWKOWSKI";
+                            var node = nameEl.childNodes[0];
+                            node.textContent = "";
+                            var j = 0;
+                            var t2 = setInterval(function () {
+                                node.textContent = full.substring(0, j++);
+                                if (j > full.length) {
+                                    clearInterval(t2);
+                                    setTimeout(function () {
+                                        tagEl.style.visibility = "visible";
+                                        tagEl.style.opacity = "0";
+                                        tagEl.style.transition = "opacity 0.8s";
+                                        requestAnimationFrame(function () {
+                                            tagEl.style.opacity = "1";
+                                        });
+                                    }, 300);
+                                }
+                            }, 60);
+                        }, 350);
+                    }
+                }, 55);
+            }
+
+            // ── TERMINAL ──────────────────────────────────────────────────
+            var tout = document.getElementById("tout");
+            var tin = document.getElementById("tin");
+            var tbox = document.getElementById("tbox");
+
+            function tPrint(text, color) {
+                if (!tout || !tbox) return;
+                var d = document.createElement("div");
+                d.style.whiteSpace = "pre";
+                d.style.color = color || "#9ca3af";
+                d.textContent = text;
+                tout.appendChild(d);
+                tbox.scrollTop = tbox.scrollHeight;
+            }
+
+            var CMDS = {
+                help: "Dostepne komendy:\n  help      - ta pomoc\n  whoami    - kim jestem\n  hostname  - nazwa hosta\n  uname     - info o systemie\n  uptime    - czas pracy\n  ifconfig  - interfejsy\n  ping HOST - ping hosta\n  ls        - lista plikow\n  cat motd  - wiadomosc dnia\n  services  - lista uslug\n  vlan      - tabela VLANow\n  clear     - wyczysc\n  matrix    - wygaszacz ekranu",
+                whoami: "kgawkowski\nuid=0(root) gid=0(root) groups=0(root)",
+                hostname: "kris-homelab",
+                uname: "Linux kris-homelab 6.8.0-proxmox #1 SMP x86_64 GNU/Linux",
+                ls: "about.txt  contact.conf  homelab/  certs/  backups/",
+                "cat motd":
+                    '############################################\n#  kris-homelab  pve-kris-1  OVH         #\n#  Proxmox VE 8.x | TrueNAS | VyOS       #\n#  "It works on my homelab."             #\n############################################',
+                services:
+                    "AdGuard  LXC104   running\nNextcloud LXC103  running\nNginx    LXC102   running\nn8n      LXC114   running\nTailscale LXC112  running\ncloudflared       running\nAD/DC    VM201    running\nTrueNAS  VM101    running\nTrueNAS Replica   standby",
+                vlan: "VLAN  NAME      SUBNET\n30    NAS       10.20.30.0/24\n40    CCTV      10.20.40.0/24\n60    Clients   10.20.60.0/24\n80    Work      10.20.80.0/24\n90    MGMT      10.20.90.0/24\n100   Guest     10.20.100.0/24",
+                clear: null,
+                matrix: "__MATRIX__",
+            };
+
+            tPrint(
+                'Witaj! Wpisz "help" aby zobaczyc dostepne komendy.',
+                "#6b7280",
+            );
+
+            function runCmd(raw) {
+                var cmd = raw.trim().toLowerCase();
+                if (!cmd) return;
+                tPrint("root@kris-homelab:~$ " + raw.trim(), "#e8a020");
+                var out;
+                if (cmd === "uptime") {
+                    out =
+                        "up " +
+                        (Math.floor(Math.random() * 900) + 100) +
+                        " hours, load: 0.12, 0.08, 0.05";
+                } else if (cmd.startsWith("ping ")) {
+                    var h = raw.trim().slice(5);
+                    var ms = function () {
+                        return (Math.random() * 15 + 1).toFixed(3);
+                    };
+                    out =
+                        "PING " +
+                        h +
+                        "\n64 bytes icmp_seq=0 time=" +
+                        ms() +
+                        "ms\n64 bytes icmp_seq=1 time=" +
+                        ms() +
+                        "ms\n64 bytes icmp_seq=2 time=" +
+                        ms() +
+                        "ms\n3 packets, 0% loss";
+                } else if (cmd === "ifconfig") {
+                    out =
+                        "eth0  inet 10.0.0.1      Mask:255.255.255.0  UP\nwg0   inet 10.0.2.1     Mask:255.255.255.0  UP";
+                } else if (CMDS.hasOwnProperty(cmd)) {
+                    out = CMDS[cmd];
+                } else {
+                    out = "bash: " + cmd + ": command not found";
+                }
+                if (out === null) {
+                    if (tout) tout.innerHTML = "";
+                } else if (out === "__MATRIX__") {
+                    startMatrix();
+                } else {
+                    tPrint(out, "#9ca3af");
+                    tPrint("", "#9ca3af");
+                }
+                if (tbox) tbox.scrollTop = tbox.scrollHeight;
+            }
+
+            if (tin) {
+                tin.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        runCmd(tin.value);
+                        tin.value = "";
+                    }
+                });
+            }
+            if (tbox) {
+                tbox.addEventListener("click", function () {
+                    tin.focus();
+                });
+            }
+
+
+
+
+            // ── CARD TRANSLATIONS ─────────────────────────────────────────
+            var CS_CARDS = {
+                pl: [
+                    {cat:'SECURITY · SIEM', title:'Wdrożenie SIEM — WAZUH', desc:'Budowa usługi SIEM/SOC w oparciu o WAZUH w środowisku wirtualnym (VM) obsługującego <span style="color:var(--green)">prawie setkę agentów</span> — stacje robocze, serwery Windows i Linux. Konfiguracja reguł korelacji zdarzeń, alertów bezpieczeństwa oraz integracja z pipeline\'em logów.', tags:['WAZUH','SIEM','VM Cluster','78 agentów']},
+                    {cat:'ITSM · CMDB', title:'Automatyczna inwentaryzacja infrastruktury — GLPI', desc:'Wdrożenie agentowego systemu inwentaryzacji GLPI, który automatycznie zczytuje konfigurację sprzętu, oprogramowania i zasobów sieciowych bezpośrednio z endpointów. Na bazie zebranych danych zbudowana została <span style="color:var(--green)">baza CMDB</span> — fundament zarządzania zasobami IT i obsługi zgłoszeń serwisowych.', tags:['GLPI','CMDB','Agenty','Inwentaryzacja']},
+                    {cat:'MONITORING · OBSERVABILITY', title:'Wdrożenie monitoringu ZABBIX — migracja z PRTG', desc:'Uruchomienie środowiska ZABBIX jako docelowej platformy monitoringu infrastruktury. Przeprowadzona <span style="color:var(--green)">migracja sensorów z PRTG</span> — mapowanie szablonów, odtworzenie logiki alertów i dashboardów. Wynik: pełna widoczność infrastruktury w jednym miejscu z niższym kosztem licencyjnym.', tags:['ZABBIX','PRTG','Migracja','Monitoring']},
+                    {cat:'IDENTITY · SECURITY', title:'Tierowanie Active Directory + CIS Hardening', desc:'Wdrożenie modelu Tier 0 / Tier 1 / Tier 2 w środowisku Active Directory zgodnie z wytycznymi Microsoft. Również implementacja kontrolek bezpieczeństwa CIS Benchmarks dla Windows Server / AD — polityki haseł, GPO hardening, ograniczenie lateral movement. Wynik: znaczące ograniczenie powierzchni ataku.', tags:['AD Tiering','CIS Benchmarks','GPO','Hardening']},
+                    {cat:'COMPLIANCE · GOVERNANCE', title:'Dokumentacja SZBI / NIS2 dla Zarządu', desc:'Opracowanie kompletnej dokumentacji Systemu Zarządzania Bezpieczeństwem Informacji zgodnie z normą <span style="color:var(--green)">ISO/IEC 27001</span> oraz wymaganiami dyrektywy NIS2. Pakiet dokumentów przygotowany z myślą o zarządzie: polityki, procedury, analiza ryzyka, plan ciągłości działania — gotowy do audytu.', tags:['ISO 27001','NIS2','SZBI','Dokumentacja']},
+                    {cat:'INFRASTRUCTURE · BACKUP', title:'Budowa środowiska backupu — TrueNAS + ZFS Replication', desc:'Budowa środowiska backupu opartego na <span style="color:var(--green)">TrueNAS SCALE</span> z replikacją ZFS do lokalnej/zdalnej lokalizacji air-gap. Polityki migawek, harmonogram retencji, testowanie przywracania danych. Rozwiązanie zapewnia ochronę przed ransomwarem i spełnia wymogi RTO/RPO organizacji.', tags:['TrueNAS','ZFS','Air-gap','Backup']},
+                    {cat:'MONITORING · AUTOMATION', title:'Automatyczny pipeline telemetrii i raportów AI — OpenObserve + n8n', desc:'Budowa zbiorowego pipeline\'u, który zbiera logi / metryki z <span style="color:var(--green)">Proxmoxa, LXC, VM oraz VyOS</span> (OPNsense, OpenObserve, n8n). Zdarzenia są agregowane i przekazywane do modelu AI, który generuje opisowy raport stanu infrastruktury bezpieczeństwa — całość działa w pełni bezobsługowo.', tags:['OpenObserve','OpenTelemetry','n8n','AI Ops']},
+                    {cat:'AUTOMATION · PATCHING', title:'Orkiestracja patchowania VM/LXC — Ansible + Semaphore + Proxmox', desc:'Wdrożenie centralnego systemu patch managementu dla Debian, RHEL, Alpine LXC. Wdrożenie z integracją Ansible, Semaphore i Proxmox API. Przed aktualizacją tworzony jest snapshot, następnie wykonywany patching w trybie security full fix, a osobny harmonogram usuwa snapshot po czasie max 48 godzin, z notyfikacjami e-mail po zakończeniu.', tags:['Ansible','Semaphore','Proxmox','Patch Management']},
+                    {cat:'IDENTITY · SECURITY', title:'Automatyzacja BitLocker z backupem kluczy do AD — GPO + PowerShell', desc:'Automatyzacja BitLockera i backupem kluczy do AD — GPO + PowerShell. Konfiguracja GPO wymuszającej politykę BitLocker i zapisu kluczy odzyskiwania do Active Directory oraz skryptu PowerShell uruchamianego na starcie systemu. Skrypt weryfikuje stan dysków, uruchamia szyfrowanie na niezaszyfrowanych woluminach i wykonuje backup klucza do obiektu komputera w AD, bez potrzeby użycia intuny ani SCCM.', tags:['BitLocker','Active Directory','GPO','PowerShell']},
+                ],
+                en: [
+                    {cat:'SECURITY · SIEM', title:'SIEM Deployment — WAZUH', desc:'Building a SIEM/SOC service based on WAZUH in a virtual environment (VM) serving <span style="color:var(--green)">nearly a hundred agents</span> — workstations, Windows and Linux servers. Configuration of event correlation rules, security alerts and log pipeline integration.', tags:['WAZUH','SIEM','VM Cluster','78 agents']},
+                    {cat:'ITSM · CMDB', title:'Automated Infrastructure Inventory — GLPI', desc:'Deployment of GLPI agent-based inventory system that automatically reads hardware, software and network resource configurations directly from endpoints. Based on collected data, a <span style="color:var(--green)">CMDB database</span> was built — the foundation for IT asset management and service ticket handling.', tags:['GLPI','CMDB','Agents','Inventory']},
+                    {cat:'MONITORING · OBSERVABILITY', title:'ZABBIX Monitoring Deployment — Migration from PRTG', desc:'Setting up ZABBIX as the target infrastructure monitoring platform. Completed <span style="color:var(--green)">sensor migration from PRTG</span> — template mapping, rebuilding alert logic and dashboards. Result: full infrastructure visibility in one place with lower licensing costs.', tags:['ZABBIX','PRTG','Migration','Monitoring']},
+                    {cat:'IDENTITY · SECURITY', title:'Active Directory Tiering + CIS Hardening', desc:'Implementing Tier 0 / Tier 1 / Tier 2 model in Active Directory per Microsoft guidelines. Also implementing CIS Benchmarks security controls for Windows Server / AD — password policies, GPO hardening, lateral movement restriction. Result: significantly reduced attack surface.', tags:['AD Tiering','CIS Benchmarks','GPO','Hardening']},
+                    {cat:'COMPLIANCE · GOVERNANCE', title:'ISMS / NIS2 Documentation for Management', desc:'Developing complete Information Security Management System documentation in accordance with <span style="color:var(--green)">ISO/IEC 27001</span> and NIS2 directive. Document package tailored for management: policies, procedures, risk analysis, business continuity plan — audit-ready.', tags:['ISO 27001','NIS2','ISMS','Documentation']},
+                    {cat:'INFRASTRUCTURE · BACKUP', title:'Backup Environment — TrueNAS + ZFS Replication', desc:'Building a backup environment based on <span style="color:var(--green)">TrueNAS SCALE</span> with ZFS replication to local/remote air-gap location. Snapshot policies, retention schedule, restore testing. Solution provides ransomware protection and meets organizational RTO/RPO requirements.', tags:['TrueNAS','ZFS','Air-gap','Backup']},
+                    {cat:'MONITORING · AUTOMATION', title:'Automated AI Telemetry & Reporting Pipeline — OpenObserve + n8n', desc:'Building a unified pipeline collecting logs/metrics from <span style="color:var(--green)">Proxmox, LXC, VM and VyOS</span> (OPNsense, OpenObserve, n8n). Events are aggregated and passed to an AI model that generates a descriptive infrastructure security report — fully automated.', tags:['OpenObserve','OpenTelemetry','n8n','AI Ops']},
+                    {cat:'AUTOMATION · PATCHING', title:'VM/LXC Patch Orchestration — Ansible + Semaphore + Proxmox', desc:'Deploying a central patch management system for Debian, RHEL, Alpine LXC with Ansible, Semaphore and Proxmox API integration. Before updating, a snapshot is created, then security full fix patching is performed. A separate schedule removes the snapshot after max 48 hours, with email notifications upon completion.', tags:['Ansible','Semaphore','Proxmox','Patch Management']},
+                    {cat:'IDENTITY · SECURITY', title:'BitLocker Automation with AD Key Backup — GPO + PowerShell', desc:'BitLocker automation with AD key backup using GPO + PowerShell. GPO configuration enforcing BitLocker policy and recovery key backup to Active Directory, plus a PowerShell script running at system startup. Script verifies disk encryption state, encrypts unencrypted volumes and backs up the key to the computer object in AD — no Intune or SCCM required.', tags:['BitLocker','Active Directory','GPO','PowerShell']},
+                ]
+            };
+
+            var EXP_CARDS = {
+                pl: [
+                    {date:'01.2025 — obecnie', title:'Senior Administrator IT', env:'Środowisko hybrydowe · 650+ użytkowników', desc:'&gt; Zarządzanie infrastrukturą IT wielu podmiotów, on-prem i chmura MS<br>&gt; Bezpieczeństwo operacyjne, zgodność z NIS2 i ISO 27001'},
+                    {date:'12.2023 — 12.2025', title:'Administrator Systemów IT', env:'Środowisko enterprise · Active Directory · CIS / CVE', desc:'&gt; Administracja serwerami, hardening, zarządzanie tożsamością<br>&gt; Projekty migracyjne i integracja środowisk IT w grupie kapitałowej'},
+                    {date:'06.2023 — 12.2023', title:'Administrator Infrastruktury IT', env:'Linux · Windows · VMware · multi-site', desc:'&gt; Utrzymanie i rozbudowa infrastruktury serwerowej w wielu lokalizacjach<br>&gt; Wirtualizacja VMware ESXi/vSphere, ciągłość działania systemów'},
+                    {date:'11.2021 — 05.2023', title:'Główny Informatyk / Administrator Techniczny Systemów', env:'Sektor publiczny · ISO/IEC 27001 / SZBI', desc:'&gt; Zarządzanie infrastrukturą IT i bezpieczeństwem informacji<br>&gt; ATS wg normy ISO/IEC 27001, hardening serwerów, projekty IT'},
+                    {date:'01.2019 — 09.2021', title:'Specjalista IT / Outsourcing B2B', env:'Outsourcing IT · CCTV · SSWiN · WLAN/LAN', desc:'&gt; Wsparcie techniczne, sieci, systemy bezpieczeństwa i CCTV<br>&gt; Obsługa klientów biznesowych w modelu outsourcingu IT'},
+                    {date:'', title:'CERTIFICATIONS &amp; LICENCES', env:'', desc:'&gt; CEH — Certified Ethical Hacker · EC-Council (2022)<br>&gt; AZ-900 — Microsoft Azure Fundamentals (2025)<br>&gt; MS-101 Advanced Administration · DAGMA (2022)<br>&gt; ESET Management Client Security Professional (2023)<br>&gt; Dahua Advanced Training IP Solution (2018)<br>&gt; Kwalifikowany pracownik zabezpieczenia technicznego IP KSP<br>&gt; Uprawnienia SEP do 1kV (E) · eksploatacja gr. 1<br>&gt; Doświadczenie: 9+ lat w środowiskach produkcyjnych'},
+                ],
+                en: [
+                    {date:'01.2025 — present', title:'Senior IT Administrator', env:'Hybrid environment · 650+ users', desc:'&gt; Managing IT infrastructure for multiple entities, on-prem and MS cloud<br>&gt; Operational security, compliance with NIS2 and ISO 27001'},
+                    {date:'12.2023 — 12.2025', title:'IT Systems Administrator', env:'Enterprise environment · Active Directory · CIS / CVE', desc:'&gt; Server administration, hardening, identity management<br>&gt; Migration projects and IT environment integration in a capital group'},
+                    {date:'06.2023 — 12.2023', title:'IT Infrastructure Administrator', env:'Linux · Windows · VMware · multi-site', desc:'&gt; Maintenance and expansion of server infrastructure across multiple sites<br>&gt; VMware ESXi/vSphere virtualization, system continuity'},
+                    {date:'11.2021 — 05.2023', title:'Lead IT Administrator / Technical Systems Administrator', env:'Public sector · ISO/IEC 27001 / ISMS', desc:'&gt; Managing IT infrastructure and information security<br>&gt; ISMS per ISO/IEC 27001, server hardening, IT projects'},
+                    {date:'01.2019 — 09.2021', title:'IT Specialist / B2B Outsourcing', env:'IT Outsourcing · CCTV · SSWiN · WLAN/LAN', desc:'&gt; Technical support, networking, security systems and CCTV<br>&gt; Serving business clients in IT outsourcing model'},
+                    {date:'', title:'CERTIFICATIONS &amp; LICENCES', env:'', desc:'&gt; CEH — Certified Ethical Hacker · EC-Council (2022)<br>&gt; AZ-900 — Microsoft Azure Fundamentals (2025)<br>&gt; MS-101 Advanced Administration · DAGMA (2022)<br>&gt; ESET Management Client Security Professional (2023)<br>&gt; Dahua Advanced Training IP Solution (2018)<br>&gt; Qualified technical security employee IP KSP<br>&gt; SEP authorization up to 1kV (E) · operation group 1<br>&gt; Experience: 9+ years in production environments'},
+                ]
+            };
+
+            function renderCards(lang) {
+                // Render case study cards
+                for (var i = 0; i < CS_CARDS[lang].length; i++) {
+                    var card = document.getElementById('cs-card-' + (i+1));
+                    if (!card) continue;
+                    var d = CS_CARDS[lang][i];
+                    var tagsHtml = d.tags.map(function(t){ return '<span class="badge up">' + t + '</span>'; }).join('');
+                    card.innerHTML = '<div class="post-date" style="color:var(--green)">' + d.cat + '</div>' +
+                        '<div class="post-title" style="font-size:0.95rem;margin:0.4rem 0">' + d.title + '</div>' +
+                        '<div style="color:#ccffcc;font-size:0.84rem;line-height:1.75">' + d.desc + '</div>' +
+                        '<div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.4rem">' + tagsHtml + '</div>';
+                }
+                // Render experience cards
+                for (var j = 0; j < EXP_CARDS[lang].length; j++) {
+                    var ecard = document.getElementById('exp-card-' + (j+1));
+                    if (!ecard) continue;
+                    var ed = EXP_CARDS[lang][j];
+                    var envHtml = ed.env ? '<div style="color:var(--dim-green);font-size:0.82rem;margin-bottom:0.5rem">' + ed.env + '</div>' : '';
+                    var dateHtml = ed.date ? '<div class="post-date">' + ed.date + '</div>' : '';
+                    ecard.innerHTML = dateHtml +
+                        '<div class="post-title" style="font-size:1rem;margin-bottom:0.4rem">' + ed.title + '</div>' +
+                        envHtml +
+                        '<div style="color:#ccffcc;font-size:0.85rem;line-height:1.7">' + ed.desc + '</div>';
+                }
+            }
+
+            // ── LANGUAGE SWITCH ───────────────────────────────────────────
+            var LANG_DICT = {
+                pl: {
+                    'tagline': 'IT Infrastructure &nbsp;&middot;&nbsp; Security &nbsp;&middot;&nbsp; Virtualization &nbsp;&middot;&nbsp; Linux &nbsp;&middot;&nbsp; Windows &nbsp;&middot;&nbsp; Networking &nbsp;&middot;&nbsp; Cloud &amp; Automation &nbsp;&middot;&nbsp; Backup',
+                    'nav-home': '[HOME]',
+                    'nav-case': '[CASE STUDY]',
+                    'nav-exp': '[EXPERIENCE]',
+                    'nav-terminal': '[ASK CV]',
+                    'nav-contact': '[KONTAKT]',
+                    'about-label': '// ABOUT',
+                    'about-p1': 'Planuję, buduję, administruję i zabezpieczam środowiska IT. Specjalizuję się w tożsamości, wirtualizacji i bezpieczeństwie operacyjnym — w środowiskach Windows, Linux i hybrydowych.',
+                    'about-p2': 'Pracuję na styku infrastruktury, tożsamości i bezpieczeństwa operacyjnego. Tworzę środowiska IT działające bez awarii i zagrożeń — od kilkudziesięciu do kilkuset użytkowników.',
+                    'casestudy-label': '// CASE STUDY',
+                    'exp-label': '// PROFESSIONAL EXPERIENCE',
+                    'ask-label': '// ASK MY CV',
+                    'ask-desc': 'Asystent oparty na AI z dostępem do mojego CV. Zadaj dowolne pytanie — o doświadczeniu, technologiach, certyfikatach.',
+                    'ask-placeholder': 'Zadaj pytanie o CV...',
+                    'ask-btn': '[WYŚLIJ]',
+                    'ask-footer': '&gt; Odpowiedzi generowane przez GPT-4o-mini na podstawie danych CV &nbsp;·&nbsp; max 400 tokenów',
+                    'contact-label': '// CONTACT',
+                    'contact-website': 'STRONA WWW:',
+                    'contact-location': 'LOKALIZACJA:',
+                    'contact-github': 'GITHUB:',
+                    'contact-email': 'EMAIL:',
+                    'contact-phone': 'TELEFON:',
+                    'footer-logout': 'root@kris-homelab:~$ logout',
+                    'skills-virt': 'SYSTEMY I WIRTUALIZACJA',
+                    'skills-backup': 'BACKUP I BEZPIECZEŃSTWO',
+                    'skills-infra': 'INFRASTRUKTURA I ZARZĄDZANIE',
+                    'skills-mon': 'MONITORING · NARZĘDZIA · SKRYPTY',
+                    'rag-welcome': '&gt; Witaj. Jestem asystentem CV Krzysztofa.\n                                Zadaj mi pytanie o CV.',
+                },
+                en: {
+                    'tagline': 'IT Infrastructure &nbsp;&middot;&nbsp; Security &nbsp;&middot;&nbsp; Virtualization &nbsp;&middot;&nbsp; Linux &nbsp;&middot;&nbsp; Windows &nbsp;&middot;&nbsp; Networking &nbsp;&middot;&nbsp; Cloud &amp; Automation &nbsp;&middot;&nbsp; Backup',
+                    'nav-home': '[HOME]',
+                    'nav-case': '[CASE STUDY]',
+                    'nav-exp': '[EXPERIENCE]',
+                    'nav-terminal': '[ASK CV]',
+                    'nav-contact': '[CONTACT]',
+                    'about-label': '// ABOUT',
+                    'about-p1': 'I plan, build, administrate and secure IT environments. I specialize in identity, virtualization and operational security — across Windows, Linux and hybrid environments.',
+                    'about-p2': 'I work at the intersection of infrastructure, identity and operational security. I build IT environments that run without failures or threats — from tens to hundreds of users.',
+                    'casestudy-label': '// CASE STUDY',
+                    'exp-label': '// PROFESSIONAL EXPERIENCE',
+                    'ask-label': '// ASK MY CV',
+                    'ask-desc': 'AI assistant with access to my CV. Ask any question — about experience, technologies, certifications.',
+                    'ask-placeholder': 'Ask a question about my CV...',
+                    'ask-btn': '[SEND]',
+                    'ask-footer': '&gt; Answers generated by GPT-4o-mini based on CV data &nbsp;·&nbsp; max 400 tokens',
+                    'contact-label': '// CONTACT',
+                    'contact-website': 'WEBSITE:',
+                    'contact-location': 'LOCATION:',
+                    'contact-github': 'GITHUB:',
+                    'contact-email': 'EMAIL:',
+                    'contact-phone': 'PHONE:',
+                    'footer-logout': 'root@kris-homelab:~$ logout',
+                    'skills-virt': 'SYSTEMS & VIRTUALIZATION',
+                    'skills-backup': 'BACKUP & SECURITY',
+                    'skills-infra': 'INFRASTRUCTURE & MANAGEMENT',
+                    'skills-mon': 'MONITORING · TOOLS · SCRIPTS',
+                    'rag-welcome': '&gt; Hi. I am Krzysztof\'s CV assistant.\n                                Ask me a question about my CV.',
+                }
+            };
+
+            var currentLang = localStorage.getItem('lang') || 'pl';
+
+            function applyLang(lang) {
+                var d = LANG_DICT[lang];
+                if (!d) return;
+
+                function setText(id, val) {
+                    var el = document.getElementById(id);
+                    if (el) el.innerHTML = val;
+                }
+                function setAttr(id, attr, val) {
+                    var el = document.getElementById(id);
+                    if (el) el[attr] = val;
+                }
+
+                setText('header-tagline', d['tagline']);
+                setText('nav-home', d['nav-home']);
+                setText('nav-case', d['nav-case']);
+                setText('nav-exp', d['nav-exp']);
+                setText('nav-terminal', d['nav-terminal']);
+                setText('nav-contact', d['nav-contact']);
+                setText('about-label', d['about-label']);
+                setText('about-p1', d['about-p1']);
+                setText('about-p2', d['about-p2']);
+                setText('casestudy-label', d['casestudy-label']);
+                setText('exp-label', d['exp-label']);
+                setText('ask-label', d['ask-label']);
+                setText('ask-desc', d['ask-desc']);
+                setText('ask-btn', d['ask-btn']);
+                setText('ask-footer', d['ask-footer']);
+                setText('contact-label', d['contact-label']);
+                setText('contact-website', d['contact-website']);
+                setText('contact-location', d['contact-location']);
+                setText('contact-github', d['contact-github']);
+                setText('contact-email', d['contact-email']);
+                setText('contact-phone', d['contact-phone']);
+                setText('footer-logout', d['footer-logout']);
+                setText('skills-virt', d['skills-virt']);
+                setText('skills-backup', d['skills-backup']);
+                setText('skills-infra', d['skills-infra']);
+                setText('skills-mon', d['skills-mon']);
+                setAttr('rag-input', 'placeholder', d['ask-placeholder']);
+
+                // Update lang button label
+                var btn = document.getElementById('lang-toggle');
+                if (btn) btn.textContent = lang === 'pl' ? '[EN]' : '[PL]';
+
+                renderCards(lang);
+                currentLang = lang;
+                localStorage.setItem('lang', lang);
+                document.documentElement.lang = lang;
+            }
+
+            function toggleLang() {
+                applyLang(currentLang === 'pl' ? 'en' : 'pl');
+            }
+
+            // Apply saved lang on load (called after DOM ready)
+            document.addEventListener('DOMContentLoaded', function() {
+                if (currentLang === 'en') applyLang('en');
+                else renderCards('pl');
+            });
+
+            // ── THEME TOGGLE ──────────────────────────────────────────────
+            (function() {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'light') {
+                    document.body.classList.add('light');
+                    updateThemeBtn(true);
+                }
+            })();
+
+            function updateThemeBtn(isLight) {
+                var icon = document.getElementById('theme-icon');
+                var label = document.getElementById('theme-label');
+                if (!icon || !label) return;
+                if (isLight) { icon.textContent = '🌙'; label.textContent = 'DARK'; }
+                else { icon.textContent = '☀'; label.textContent = 'LIGHT'; }
+            }
+
+            function toggleTheme() {
+                var isLight = document.body.classList.toggle('light');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                updateThemeBtn(isLight);
+            }
+
+            // ── MATRIX ────────────────────────────────────────────────────
+            var canvas = document.getElementById("matrix-canvas");
+            var ctx = canvas.getContext("2d");
+            var mExit = document.getElementById("matrix-exit");
+            var mTimer = null;
+
+            function startMatrix() {
+                canvas.classList.add("active");
+                mExit.classList.add("active");
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                var cols = Math.floor(canvas.width / 16);
+                var drops = [];
+                for (var i = 0; i < cols; i++) drops[i] = 1;
+                var chars = "アイウエオカキABCDEFGHIJKLMNOP0123456789!@#$%";
+                mTimer = setInterval(function () {
+                    ctx.fillStyle = "rgba(0,0,0,0.05)";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = "#e8a020";
+                    ctx.font = '15px "JetBrains Mono",monospace';
+                    for (var i = 0; i < drops.length; i++) {
+                        var c = chars[Math.floor(Math.random() * chars.length)];
+                        ctx.fillText(c, i * 16, drops[i] * 16);
+                        if (
+                            drops[i] * 16 > canvas.height &&
+                            Math.random() > 0.975
+                        )
+                            drops[i] = 0;
+                        drops[i]++;
+                    }
+                }, 40);
+            }
+
+            function stopMatrix() {
+                clearInterval(mTimer);
+                canvas.classList.remove("active");
+                mExit.classList.remove("active");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            mExit.addEventListener("click", stopMatrix);
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") stopMatrix();
+            });
+
+            // ── CV RAG ASSISTANT ──────────────────────────────────────────
+            // Ustaw URL workera po deployu — patrz README.md
+            var RAG_ENDPOINT = "https://YOUR_SUBDOMAIN.workers.dev";
+
+            function ragPrint(text, color, prefix) {
+                var box = document.getElementById("rag-out");
+                var d = document.createElement("div");
+                d.style.whiteSpace = "pre-wrap";
+                d.style.color = color || "#9ca3af";
+                d.style.marginBottom = "0.5rem";
+                d.style.lineHeight = "1.7";
+                d.textContent = (prefix || "") + text;
+                box.appendChild(d);
+                var rb = document.getElementById("rag-box");
+                rb.scrollTop = rb.scrollHeight;
+            }
+
+            function ragSetLoading(on) {
+                var btn = document.getElementById("rag-btn");
+                var inp = document.getElementById("rag-input");
+                if (on) {
+                    btn.textContent = "[...]";
+                    btn.disabled = true;
+                    inp.disabled = true;
+                } else {
+                    btn.textContent = "[WYŚLIJ]";
+                    btn.disabled = false;
+                    inp.disabled = false;
+                    inp.focus();
+                }
+            }
+
+            async function ragAsk() {
+                var inp = document.getElementById("rag-input");
+                var q = inp.value.trim();
+                if (!q) return;
+                inp.value = "";
+                ragPrint("visitor@cv:~$ " + q, "#e8a020");
+                ragSetLoading(true);
+                try {
+                    var res = await fetch(RAG_ENDPOINT, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ question: q }),
+                    });
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    var data = await res.json();
+                    ragPrint(
+                        data.answer || "Brak odpowiedzi.",
+                        "#c8cdd4",
+                        "> ",
+                    );
+                } catch (e) {
+                    ragPrint(
+                        "Błąd połączenia z asystentem: " + e.message,
+                        "#cc4444",
+                        "> ",
+                    );
+                }
+                ragSetLoading(false);
+            }
+
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    var inp = document.getElementById("rag-input");
+                    if (document.activeElement === inp) {
+                        e.preventDefault();
+                        ragAsk();
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>
