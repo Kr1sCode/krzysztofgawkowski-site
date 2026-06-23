@@ -6,7 +6,7 @@
 // Ustaw domenę portfolio po deployu — patrz README.md
 const ALLOWED_ORIGIN = "https://YOUR_DOMAIN.example";
 
-const CV_DATA = `Krzysztof Gawkowski — Senior IT Administrator / IT Infrastructure Engineer
+const CV_DATA = `Krzysztof Gawkowski — Administrator IT / IT Infrastructure Engineer
 
 KONTAKT:
 - Telefon: +48 884-333-222
@@ -15,7 +15,7 @@ KONTAKT:
 - Strona: krzysztofgawkowski.pl
 - Lokalizacja: Warszawa, Polska
 
-TYTUŁ ZAWODOWY: Senior IT Administrator | Infrastruktura | Bezpieczeństwo | Cloud
+TYTUŁ ZAWODOWY: Administrator IT | Infrastruktura | Bezpieczeństwo | Cloud
 
 PROFIL ZAWODOWY:
 Doświadczony administrator IT z ponad 10-letnim stażem w zarządzaniu infrastrukturą serwerową,
@@ -29,7 +29,7 @@ WYKSZTAŁCENIE:
 
 DOŚWIADCZENIE ZAWODOWE:
 
-1. Senior Administrator IT — Outsourcing (01.2025 — obecnie)
+1. Administrator IT — Outsourcing (01.2025 — obecnie)
    - Samodzielne zarządzanie infrastrukturą dwóch podmiotów (600 i 50 pracowników): lokalne data center + Microsoft Cloud O365
    - Wdrożenie systemów GLPI, Zabbix, Wazuh oraz realizacja wymagań NIS2 i SZBI/ISO 27001
 
@@ -89,7 +89,7 @@ ZAINTERESOWANIA:
 - SAP/ERP
 - Model hybrydowy: Proxmox VE + sprzęt lokalny, VyOS, TrueNAS, WireGuard VPN, Cloudflare Tunnel, Active Directory, ZFS air-gap backup`;
 
-const SYSTEM_PROMPT = `Jestes asystentem CV Krzysztofa Gawkowskiego — Senior IT Administratora z Warszawy.
+const SYSTEM_PROMPT = `Jestes asystentem CV Krzysztofa Gawkowskiego — Administratora IT z Warszawy.
 Odpowiadaj TYLKO na podstawie ponizszych danych CV. Odpowiadaj po polsku lub angielsku w zaleznosci od jezyka pytania.
 Badz konkretny, zwiezly i profesjonalny. Jesli pytanie nie dotyczy CV ani kompetencji Krzysztofa, grzecznie odmow.
 Nie wymyslaj informacji ktorych nie ma w CV.
