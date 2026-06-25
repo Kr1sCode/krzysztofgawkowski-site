@@ -59,4 +59,4 @@ The RAG assistant will not work locally without a deployed worker and correct CO
 
 ## License
 
-[MIT](./LICENSE) — Copyright (c) 2026 Krzysztofgawkowski-site
+[MIT](./LICENSE) — Copyright (c) 2026 Krzysztof Gawkowski
