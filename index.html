@@ -518,61 +518,7 @@
                 min-width: 80px;
             }
 
-            /* ── TERMINAL ── */
-            #tbox,
-            #tbox * {
-                font-family: var(--font-mono) !important;
-            }
-            #tbox {
-                background: var(--terminal-bg);
-                border: 1px solid var(--border);
-                border-top: 2px solid var(--accent);
-                padding: 1rem 1.2rem;
-                font-size: 0.88rem;
-                min-height: 220px;
-                max-height: 320px;
-                overflow-y: auto;
-                cursor: text;
-                box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
-            }
-            #tbox:focus-within {
-                border-color: var(--accent);
-                box-shadow:
-                    inset 0 0 40px rgba(0, 0, 0, 0.5),
-                    0 0 0 1px rgba(45, 212, 191, 0.25);
-            }
-            #tout {
-                white-space: pre-wrap;
-                word-break: break-all;
-                color: #9ca3af;
-                font-size: 0.88rem;
-            }
-            #term-output {
-                flex: 1;
-                white-space: pre-wrap;
-                word-break: break-all;
-            }
-            .term-input-row {
-                display: flex;
-                align-items: center;
-                gap: 0.4rem;
-                margin-top: 0.5rem;
-            }
-            .term-prompt {
-                color: var(--accent);
-                white-space: nowrap;
-            }
-            #term-input {
-                background: transparent;
-                border: none;
-                outline: none;
-                color: #e8eaf0;
-                font-family: inherit;
-                font-size: inherit;
-                flex: 1;
-                caret-color: var(--accent);
-                min-width: 200px;
-            }
+
 
             /* ── CONTACT ── */
             .contact-line {
@@ -705,22 +651,7 @@
             body.light .net-node { background: var(--surface); }
             body.light .net-node .ip { color: #718096; }
 
-            /* Terminal */
-            body.light #tbox {
-                background: var(--terminal-bg) !important;
-                border-color: #cbd5e1 !important;
-                border-top-color: var(--accent) !important;
-                box-shadow: inset 0 0 20px rgba(0,0,0,0.04) !important;
-            }
-            body.light #tout { color: #374151 !important; }
-            body.light #tout div { color: #374151 !important; }
-            body.light #term-output { color: #374151 !important; }
-            body.light #term-output div { color: #374151 !important; }
-            body.light #term-input {
-                color: #1a202c !important;
-                caret-color: var(--accent) !important;
-            }
-            body.light .term-prompt { color: var(--accent) !important; }
+
 
             /* RAG box — inline style #080810 nadpisywany przez !important */
             body.light #rag-box {
@@ -1928,7 +1859,7 @@
                 "Loading kernel....................................... [OK]",
                 "Mounting filesystems................................ [OK]",
                 "Starting network interfaces......................... [OK]",
-                "  eth0: 10.0.0.1 UP",
+                "  eth0: 172.18.18.1 UP",
                 "  wg0:  10.0.2.1/24 UP",
                 "Starting VyOS Router................................ [OK]",
                 "Starting Proxmox VE................................. [OK]",
@@ -1945,7 +1876,7 @@
                 "",
                 "root@kris-homelab login: kgawkowski",
                 "Password: ••••••••••",
-                "Last login: Wed Jun 17 20:32:11 2026 from 10.0.0.42",
+                "Last login: Wed Jun 17 20:32:11 2026 from 172.18.18.42",
                 "",
                 "Welcome to kris-homelab.",
                 "Loading interface...",
@@ -2046,103 +1977,6 @@
                 }, 55);
             }
 
-            // ── TERMINAL ──────────────────────────────────────────────────
-            var tout = document.getElementById("tout");
-            var tin = document.getElementById("tin");
-            var tbox = document.getElementById("tbox");
-
-            function tPrint(text, color) {
-                if (!tout || !tbox) return;
-                var d = document.createElement("div");
-                d.style.whiteSpace = "pre";
-                d.style.color = color || "#9ca3af";
-                d.textContent = text;
-                tout.appendChild(d);
-                tbox.scrollTop = tbox.scrollHeight;
-            }
-
-            var CMDS = {
-                help: "Dostepne komendy:\n  help      - ta pomoc\n  whoami    - kim jestem\n  hostname  - nazwa hosta\n  uname     - info o systemie\n  uptime    - czas pracy\n  ifconfig  - interfejsy\n  ping HOST - ping hosta\n  ls        - lista plikow\n  cat motd  - wiadomosc dnia\n  services  - lista uslug\n  vlan      - tabela VLANow\n  clear     - wyczysc\n  matrix    - wygaszacz ekranu",
-                whoami: "kgawkowski\nuid=0(root) gid=0(root) groups=0(root)",
-                hostname: "kris-homelab",
-                uname: "Linux kris-homelab 6.8.0-proxmox #1 SMP x86_64 GNU/Linux",
-                ls: "about.txt  contact.conf  homelab/  certs/  backups/",
-                "cat motd":
-                    '############################################\n#  kris-homelab  pve-kris-1  OVH         #\n#  Proxmox VE 8.x | TrueNAS | VyOS       #\n#  "It works on my homelab."             #\n############################################',
-                services:
-                    "AdGuard  LXC104   running\nNextcloud LXC103  running\nNginx    LXC102   running\nn8n      LXC114   running\nTailscale LXC112  running\ncloudflared       running\nAD/DC    VM201    running\nTrueNAS  VM101    running\nTrueNAS Replica   standby",
-                vlan: "VLAN  NAME      SUBNET\n30    NAS       10.20.30.0/24\n40    CCTV      10.20.40.0/24\n60    Clients   10.20.60.0/24\n80    Work      10.20.80.0/24\n90    MGMT      10.20.90.0/24\n100   Guest     10.20.100.0/24",
-                clear: null,
-                matrix: "__MATRIX__",
-            };
-
-            tPrint(
-                'Witaj! Wpisz "help" aby zobaczyc dostepne komendy.',
-                "#6b7280",
-            );
-
-            function runCmd(raw) {
-                var cmd = raw.trim().toLowerCase();
-                if (!cmd) return;
-                tPrint("root@kris-homelab:~$ " + raw.trim(), "#e8a020");
-                var out;
-                if (cmd === "uptime") {
-                    out =
-                        "up " +
-                        (Math.floor(Math.random() * 900) + 100) +
-                        " hours, load: 0.12, 0.08, 0.05";
-                } else if (cmd.startsWith("ping ")) {
-                    var h = raw.trim().slice(5);
-                    var ms = function () {
-                        return (Math.random() * 15 + 1).toFixed(3);
-                    };
-                    out =
-                        "PING " +
-                        h +
-                        "\n64 bytes icmp_seq=0 time=" +
-                        ms() +
-                        "ms\n64 bytes icmp_seq=1 time=" +
-                        ms() +
-                        "ms\n64 bytes icmp_seq=2 time=" +
-                        ms() +
-                        "ms\n3 packets, 0% loss";
-                } else if (cmd === "ifconfig") {
-                    out =
-                        "eth0  inet 10.0.0.1      Mask:255.255.255.0  UP\nwg0   inet 10.0.2.1     Mask:255.255.255.0  UP";
-                } else if (CMDS.hasOwnProperty(cmd)) {
-                    out = CMDS[cmd];
-                } else {
-                    out = "bash: " + cmd + ": command not found";
-                }
-                if (out === null) {
-                    if (tout) tout.innerHTML = "";
-                } else if (out === "__MATRIX__") {
-                    startMatrix();
-                } else {
-                    tPrint(out, "#9ca3af");
-                    tPrint("", "#9ca3af");
-                }
-                if (tbox) tbox.scrollTop = tbox.scrollHeight;
-            }
-
-            if (tin) {
-                tin.addEventListener("keydown", function (e) {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        runCmd(tin.value);
-                        tin.value = "";
-                    }
-                });
-            }
-            if (tbox) {
-                tbox.addEventListener("click", function () {
-                    tin.focus();
-                });
-            }
-
-
-
-
             // ── CARD TRANSLATIONS ─────────────────────────────────────────
             var CS_CARDS = {
                 pl: [
@@ -2154,7 +1988,7 @@
                     {cat:'INFRASTRUCTURE · BACKUP', title:'Budowa środowiska backupu — TrueNAS + ZFS Replication', desc:'Budowa środowiska backupu opartego na <span style="color:var(--green)">TrueNAS SCALE</span> z replikacją ZFS do lokalnej/zdalnej lokalizacji air-gap. Polityki migawek, harmonogram retencji, testowanie przywracania danych. Rozwiązanie zapewnia ochronę przed ransomwarem i spełnia wymogi RTO/RPO organizacji.', tags:['TrueNAS','ZFS','Air-gap','Backup']},
                     {cat:'MONITORING · AUTOMATION', title:'Automatyczny pipeline telemetrii i raportów AI — OpenObserve + n8n', desc:'Budowa zbiorowego pipeline\'u, który zbiera logi / metryki z <span style="color:var(--green)">Proxmoxa, LXC, VM oraz VyOS</span> (OPNsense, OpenObserve, n8n). Zdarzenia są agregowane i przekazywane do modelu AI, który generuje opisowy raport stanu infrastruktury bezpieczeństwa — całość działa w pełni bezobsługowo.', tags:['OpenObserve','OpenTelemetry','n8n','AI Ops']},
                     {cat:'AUTOMATION · PATCHING', title:'Orkiestracja patchowania VM/LXC — Ansible + Semaphore + Proxmox', desc:'Wdrożenie centralnego systemu patch managementu dla Debian, RHEL, Alpine LXC. Wdrożenie z integracją Ansible, Semaphore i Proxmox API. Przed aktualizacją tworzony jest snapshot, następnie wykonywany patching w trybie security full fix, a osobny harmonogram usuwa snapshot po czasie max 48 godzin, z notyfikacjami e-mail po zakończeniu.', tags:['Ansible','Semaphore','Proxmox','Patch Management']},
-                    {cat:'IDENTITY · SECURITY', title:'Automatyzacja BitLocker z backupem kluczy do AD — GPO + PowerShell', desc:'Automatyzacja BitLockera i backupem kluczy do AD — GPO + PowerShell. Konfiguracja GPO wymuszającej politykę BitLocker i zapisu kluczy odzyskiwania do Active Directory oraz skryptu PowerShell uruchamianego na starcie systemu. Skrypt weryfikuje stan dysków, uruchamia szyfrowanie na niezaszyfrowanych woluminach i wykonuje backup klucza do obiektu komputera w AD, bez potrzeby użycia intuny ani SCCM.', tags:['BitLocker','Active Directory','GPO','PowerShell']},
+                    {cat:'IDENTITY · SECURITY', title:'Automatyzacja BitLocker z backupem kluczy do AD — GPO + PowerShell', desc:'Automatyzacja BitLockera i backupem kluczy do AD — GPO + PowerShell. Konfiguracja GPO wymuszającej politykę BitLocker i zapisu kluczy odzyskiwania do Active Directory oraz skryptu PowerShell uruchamianego na starcie systemu. Skrypt weryfikuje stan dysków, uruchamia szyfrowanie na niezaszyfrowanych woluminach i wykonuje backup klucza do obiektu komputera w AD, bez potrzeby użycia Intune ani SCCM.', tags:['BitLocker','Active Directory','GPO','PowerShell']},
                 ],
                 en: [
                     {cat:'SECURITY · SIEM', title:'SIEM Deployment — WAZUH', desc:'Building a SIEM/SOC service based on WAZUH in a virtual environment (VM) serving <span style="color:var(--green)">nearly a hundred agents</span> — workstations, Windows and Linux servers. Configuration of event correlation rules, security alerts and log pipeline integration.', tags:['WAZUH','SIEM','VM Cluster','78 agents']},
@@ -2410,8 +2244,7 @@
             });
 
             // ── CV RAG ASSISTANT ──────────────────────────────────────────
-            // Ustaw URL workera po deployu — patrz README.md
-            var RAG_ENDPOINT = "https://YOUR_SUBDOMAIN.workers.dev";
+            var RAG_ENDPOINT = "https://cv.gawkowskimail.workers.dev";
 
             function ragPrint(text, color, prefix) {
                 var box = document.getElementById("rag-out");

@@ -1054,7 +1054,7 @@
                 >
                     <div class="ni">
                         <div class="nl">Kamery CCTV</div>
-                        <div class="ns">10.20.120.10</div>
+                        <div class="ns">172.20.120.10</div>
                     </div>
                 </div>
                 <div
@@ -1109,7 +1109,7 @@
                 >
                     <div class="ni">
                         <div class="nl">Monitor CCTV</div>
-                        <div class="ns">10.20.40.2</div>
+                        <div class="ns">172.20.40.2</div>
                     </div>
                 </div>
 
@@ -1276,7 +1276,7 @@
                 >
                     <div class="ni">
                         <div class="nl">MGMT-LAN</div>
-                        <div class="ns">10.18.18/24</div>
+                        <div class="ns">172.18.18/24</div>
                     </div>
                 </div>
 
@@ -1300,7 +1300,7 @@
                 >
                     <div class="ni">
                         <div class="nl">VyOS Router</div>
-                        <div class="ns">m625q · 10.18.18.1</div>
+                        <div class="ns">m625q · 172.18.18.1</div>
                     </div>
                 </div>
                 <div
@@ -1333,7 +1333,7 @@
                 >
                     <div class="ni">
                         <div class="nl">WAN eth1</div>
-                        <div class="ns">192.168.1.10 DHCP</div>
+                        <div class="ns">192.168.1.67 DHCP</div>
                     </div>
                 </div>
                 <div
@@ -1368,7 +1368,7 @@
                 >
                     <div class="ni">
                         <div class="nl">TrueNAS Primary</div>
-                        <div class="ns">10.20.30.4 · VLAN30</div>
+                        <div class="ns">172.20.30.4 · VLAN30</div>
                     </div>
                 </div>
                 <div
@@ -1392,7 +1392,7 @@
                 >
                     <div class="ni">
                         <div class="nl">WG Tunnel</div>
-                        <div class="ns">203.0.113.10 OVH</div>
+                        <div class="ns">54.250.250.250 OVH</div>
                     </div>
                 </div>
                 <div
@@ -1425,7 +1425,7 @@
                 >
                     <div class="ni">
                         <div class="nl">AD/DC · VM201</div>
-                        <div class="ns">10.19.19.12</div>
+                        <div class="ns">172.19.19.12</div>
                     </div>
                 </div>
                 <div
@@ -1458,7 +1458,7 @@
                 >
                     <div class="ni">
                         <div class="nl">AdGuard · LXC104</div>
-                        <div class="ns">10.19.19.19</div>
+                        <div class="ns">172.19.19.19</div>
                     </div>
                 </div>
                 <div
@@ -1469,7 +1469,7 @@
                 >
                     <div class="ni">
                         <div class="nl">Omada · LXC109</div>
-                        <div class="ns">10.19.19.20</div>
+                        <div class="ns">172.19.19.20</div>
                     </div>
                 </div>
                 <div
@@ -1535,7 +1535,7 @@
                 >
                     <div class="ni">
                         <div class="nl">OpenObserve</div>
-                        <div class="ns">10.19.19.6 · syslog</div>
+                        <div class="ns">172.19.19.6 · syslog</div>
                     </div>
                 </div>
                 <div
@@ -1730,7 +1730,7 @@
                     r: [
                         ["Sieć", "WiFi 2.4 / 5 GHz"],
                         ["VLAN", "VLAN120 / VLAN100 (gość)"],
-                        ["DNS", "AdGuard 10.19.19.19"],
+                        ["DNS", "AdGuard 172.19.19.19"],
                     ],
                 },
                 laptops: {
@@ -1739,14 +1739,14 @@
                     r: [
                         ["Sieć", "WiFi + Ethernet"],
                         ["VLAN", "VLAN60 (kabel), VLAN120 (WiFi)"],
-                        ["DNS", "10.19.19.12 (AD) / AdGuard"],
+                        ["DNS", "172.19.19.12 (AD) / AdGuard"],
                     ],
                 },
                 cameras: {
                     t: "Kamery CCTV",
                     c: "#55596a",
                     r: [
-                        ["IP", "10.20.120.10"],
+                        ["IP", "172.20.120.10"],
                         ["VLAN src", "VLAN120"],
                         ["Stream do", "VLAN40 CCTV (rule 250)"],
                         ["Protokół", "RTSP"],
@@ -1756,7 +1756,7 @@
                     t: "Drukarki",
                     c: "#55596a",
                     r: [
-                        ["VLAN", "VLAN70 · 10.20.70.0/24"],
+                        ["VLAN", "VLAN70 · 172.20.70.0/24"],
                         ["Dostęp", "VLAN60 NetBIOS, VLAN120 SMB 445"],
                     ],
                 },
@@ -1772,7 +1772,7 @@
                     t: "Sieć gościnowa",
                     c: "#55596a",
                     r: [
-                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["VLAN", "VLAN100 · 172.20.100.0/24"],
                         ["DNS", "8.8.8.8 (tylko internet)"],
                         ["Blokada", "Rule 489: brak DNS wewn."],
                     ],
@@ -1790,8 +1790,8 @@
                     t: "Monitor CCTV",
                     c: "#55596a",
                     r: [
-                        ["IP", "10.20.40.2"],
-                        ["VLAN", "VLAN40 · 10.20.40.0/24"],
+                        ["IP", "172.20.40.2"],
+                        ["VLAN", "VLAN40 · 172.20.40.0/24"],
                         ["Dostęp", "VLAN60 i VLAN120 (rules 240, 300)"],
                     ],
                 },
@@ -1800,7 +1800,7 @@
                     c: "#3a7fcc",
                     r: [
                         ["Model", "TP-Link EAP (Omada)"],
-                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["MGMT", "VLAN50 · 172.20.50.0/24"],
                         ["SSID-y", "Home · Guest · Work · IoT"],
                         ["Controller", "Omada LXC109 @ OVH"],
                     ],
@@ -1810,7 +1810,7 @@
                     c: "#3a7fcc",
                     r: [
                         ["Model", "TP-Link EAP (Omada)"],
-                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["MGMT", "VLAN50 · 172.20.50.0/24"],
                         ["SSID-y", "Home · Guest · Work · IoT"],
                         ["Uplink", "Switch zarządzalny"],
                     ],
@@ -1819,9 +1819,9 @@
                     t: "SSID Home",
                     c: "#3a7fcc",
                     r: [
-                        ["VLAN", "VLAN120 · 10.20.120.0/24"],
+                        ["VLAN", "VLAN120 · 172.20.120.0/24"],
                         ["Pasmo", "2.4 GHz + 5 GHz"],
-                        ["DNS", "10.19.19.12 + FamilyShield"],
+                        ["DNS", "172.19.19.12 + FamilyShield"],
                         ["Lease", "14400 s"],
                     ],
                 },
@@ -1829,7 +1829,7 @@
                     t: "SSID Guest",
                     c: "#3a7fcc",
                     r: [
-                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["VLAN", "VLAN100 · 172.20.100.0/24"],
                         ["DNS", "8.8.8.8 (zewnętrzny)"],
                         ["Izolacja", "Klienci oddzieleni"],
                     ],
@@ -1838,8 +1838,8 @@
                     t: "SSID Work WiFi",
                     c: "#3a7fcc",
                     r: [
-                        ["VLAN", "VLAN110 · 10.20.110.0/24"],
-                        ["DNS", "10.19.19.19 (AdGuard)"],
+                        ["VLAN", "VLAN110 · 172.20.110.0/24"],
+                        ["DNS", "172.19.19.19 (AdGuard)"],
                         ["Pasmo", "5 GHz preferowane"],
                     ],
                 },
@@ -1858,15 +1858,15 @@
                     r: [
                         ["Rola", "Trunk VLAN do VyOS eth0"],
                         ["VLAN trunk", "20,30,40,50,60,70,80,90,100,110,120"],
-                        ["Mgmt", "10.18.18.0/24"],
+                        ["Mgmt", "172.18.18.0/24"],
                     ],
                 },
                 vl30: {
                     t: "VLAN30 — NAS",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.30.0/24"],
-                        ["Urządzenia", "TrueNAS 10.20.30.4"],
+                        ["Sieć", "172.20.30.0/24"],
+                        ["Urządzenia", "TrueNAS 172.20.30.4"],
                         ["Blokada", "Rule 492 inter-VLAN drop"],
                     ],
                 },
@@ -1874,8 +1874,8 @@
                     t: "VLAN40 — CCTV",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.40.0/24"],
-                        ["Host", "10.20.40.2"],
+                        ["Sieć", "172.20.40.0/24"],
+                        ["Host", "172.20.40.2"],
                         ["Blokada", "Rule 493"],
                     ],
                 },
@@ -1883,8 +1883,8 @@
                     t: "VLAN50 — AP Management",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.50.0/24"],
-                        ["Omada", "10.19.19.20 (rule 330)"],
+                        ["Sieć", "172.20.50.0/24"],
+                        ["Omada", "172.19.19.20 (rule 330)"],
                         ["Blokada", "Rule 494"],
                     ],
                 },
@@ -1892,8 +1892,8 @@
                     t: "VLAN60 — Klienci przewodowi",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.60.0/24"],
-                        ["DNS", "10.19.19.12 (AD DC01)"],
+                        ["Sieć", "172.20.60.0/24"],
+                        ["DNS", "172.19.19.12 (AD DC01)"],
                         ["Dostęp", "NAS NetBIOS, Printers, CCTV"],
                     ],
                 },
@@ -1901,15 +1901,15 @@
                     t: "VLAN70 — Drukarki",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.70.0/24"],
-                        ["DNS", "10.19.19.12"],
+                        ["Sieć", "172.20.70.0/24"],
+                        ["DNS", "172.19.19.12"],
                     ],
                 },
                 vl80: {
                     t: "VLAN80 — Praca kabel",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.80.0/24"],
+                        ["Sieć", "172.20.80.0/24"],
                         ["DNS", "OpenDNS 208.67.222.222"],
                         ["Blokada", "Rule 495"],
                     ],
@@ -1918,7 +1918,7 @@
                     t: "VLAN90 — MGMT / Admin",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.90.0/24"],
+                        ["Sieć", "172.20.90.0/24"],
                         ["Prawa", "Pełny dostęp (rule 110)"],
                         ["SSH", "Tylko z VLAN90 (rule 30)"],
                     ],
@@ -1927,7 +1927,7 @@
                     t: "MGMT-LAN",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.18.18.0/24"],
+                        ["Sieć", "172.18.18.0/24"],
                         ["Interfejs", "eth0 VyOS"],
                         ["Dostęp", "Pełny (rule 100)"],
                     ],
@@ -1936,8 +1936,8 @@
                     t: "VyOS Router — m625q",
                     c: "#7868e0",
                     r: [
-                        ["LAN", "eth0 · 10.18.18.1/24"],
-                        ["WAN", "eth1 · DHCP 192.168.1.10"],
+                        ["LAN", "eth0 · 172.18.18.1/24"],
+                        ["WAN", "eth1 · DHCP 192.168.1.67"],
                         ["VPN", "WireGuard wg0 · 10.0.2.1/24"],
                         ["Firewall", "forward filter default DROP"],
                         ["NAT", "masquerade → eth1"],
@@ -1949,8 +1949,8 @@
                     c: "#7868e0",
                     r: [
                         ["Interface", "wg0 · 10.0.2.1/24"],
-                        ["Peer", "pve-new @ 203.0.113.10:51820"],
-                        ["Allowed IPs", "10.0.2.2/32 + 10.19.19.0/24"],
+                        ["Peer", "pve-new @ 54.250.250.250:51820"],
+                        ["Allowed IPs", "10.0.2.2/32 + 172.19.19.0/24"],
                         ["Port", "UDP 51820"],
                         ["Keepalive", "25s"],
                     ],
@@ -1962,7 +1962,7 @@
                         ["Default", "DROP (forward + input)"],
                         ["Established", "Accept rule 10"],
                         ["WAN chain", "OUTSIDE-LOCAL"],
-                        ["NAT", "masquerade 10.20.0.0/16"],
+                        ["NAT", "masquerade 172.20.0.0/16"],
                         ["Logging", "Włączone"],
                     ],
                 },
@@ -1970,7 +1970,7 @@
                     t: "WAN — eth1",
                     c: "#7868e0",
                     r: [
-                        ["Adres", "192.168.1.10/24 (DHCP)"],
+                        ["Adres", "192.168.1.67/24 (DHCP)"],
                         ["Upstream", "ISP LTE Router 192.168.1.1"],
                         ["NAT", "masquerade source"],
                         ["WireGuard", "UDP 51820 inbound"],
@@ -1999,7 +1999,7 @@
                     t: "TrueNAS Primary",
                     c: "#c07820",
                     r: [
-                        ["IP", "10.20.30.4"],
+                        ["IP", "172.20.30.4"],
                         ["VLAN", "VLAN30"],
                         ["Usługi", "SMB, NFS, VM Datasets"],
                         ["Replikacja", "→ TrueNAS Replica ZFS"],
@@ -2020,10 +2020,10 @@
                     t: "WireGuard Tunnel → OVH",
                     c: "#7868e0",
                     r: [
-                        ["Peer", "pve-new · 203.0.113.20"],
+                        ["Peer", "pve-new · 185.107.82.43"],
                         ["VyOS", "10.0.2.1"],
                         ["PVE", "10.0.2.2"],
-                        ["Route", "10.19.19.0/24 via wg0"],
+                        ["Route", "172.19.19.0/24 via wg0"],
                     ],
                 },
                 "ovh-fw": {
@@ -2046,14 +2046,14 @@
                         ["Dostęp", "WireGuard 10.0.2.2"],
                         ["VMs", "3 (VM101, VM201, VM202)"],
                         ["LXCs", "12 kontenerów"],
-                        ["Sieć", "10.19.19.0/24"],
+                        ["Sieć", "172.19.19.0/24"],
                     ],
                 },
                 ad: {
                     t: "Active Directory DC — VM201",
                     c: "#3a7fcc",
                     r: [
-                        ["IP", "10.19.19.12"],
+                        ["IP", "172.19.19.12"],
                         ["OS", "Windows Server Core"],
                         ["Rola", "AD DS, DNS port 53"],
                         ["DHCP ref", "DNS primary VLAN60, 70, 120"],
@@ -2080,7 +2080,7 @@
                     t: "AdGuard Home — LXC104",
                     c: "#3a7fcc",
                     r: [
-                        ["IP", "10.19.19.19"],
+                        ["IP", "172.19.19.19"],
                         ["Rola", "DNS sinkhole, blokowanie reklam"],
                         ["Upstream", "1.1.1.1, 8.8.8.8"],
                         ["Używa go", "Większość VLAN-ów"],
@@ -2090,7 +2090,7 @@
                     t: "Omada Controller — LXC109",
                     c: "#3a7fcc",
                     r: [
-                        ["IP", "10.19.19.20"],
+                        ["IP", "172.19.19.20"],
                         ["Rola", "Zarządzanie AP TP-Link"],
                         ["Dostęp", "VLAN50 → rule 330"],
                     ],
@@ -2140,7 +2140,7 @@
                     t: "OpenObserve",
                     c: "#1f9070",
                     r: [
-                        ["IP", "10.19.19.6"],
+                        ["IP", "172.19.19.6"],
                         ["Rola", "Log aggregation"],
                         ["Syslog", "NAS → UDP 514 (rule 261)"],
                     ],
@@ -2184,9 +2184,9 @@
                         ["Cache", "10 000 wpisów"],
                         [
                             "Forwarders",
-                            "1.1.1.1, 8.8.8.8, 10.19.19.12, .19.19",
+                            "1.1.1.1, 8.8.8.8, 172.19.19.12, .19.19",
                         ],
-                        ["Override", "example.dyn-dns.test → 10.19.19.19"],
+                        ["Override", "duckdns.org → 172.19.19.19"],
                     ],
                 },
             };
@@ -2668,7 +2668,7 @@
                     r: [
                         ["Sieć", "WiFi 2.4 / 5 GHz"],
                         ["VLAN", "VLAN120 / VLAN100 (gość)"],
-                        ["DNS", "AdGuard 10.19.19.19"],
+                        ["DNS", "AdGuard 172.19.19.19"],
                     ],
                 },
                 laptops: {
@@ -2677,14 +2677,14 @@
                     r: [
                         ["Sieć", "WiFi + Ethernet"],
                         ["VLAN", "VLAN60 (kabel), VLAN120 (WiFi)"],
-                        ["DNS", "10.19.19.12 (AD) / AdGuard"],
+                        ["DNS", "172.19.19.12 (AD) / AdGuard"],
                     ],
                 },
                 cameras: {
                     t: "Kamery CCTV",
                     c: "#55596a",
                     r: [
-                        ["IP", "10.20.120.10"],
+                        ["IP", "172.20.120.10"],
                         ["VLAN src", "VLAN120"],
                         ["Stream do", "VLAN40 CCTV (rule 250)"],
                         ["Protokół", "RTSP"],
@@ -2694,7 +2694,7 @@
                     t: "Drukarki",
                     c: "#55596a",
                     r: [
-                        ["VLAN", "VLAN70 · 10.20.70.0/24"],
+                        ["VLAN", "VLAN70 · 172.20.70.0/24"],
                         ["Dostęp", "VLAN60 NetBIOS, VLAN120 SMB 445"],
                     ],
                 },
@@ -2710,7 +2710,7 @@
                     t: "Sieć gościnowa",
                     c: "#55596a",
                     r: [
-                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["VLAN", "VLAN100 · 172.20.100.0/24"],
                         ["DNS", "8.8.8.8 (tylko internet)"],
                         ["Blokada", "Rule 489: brak DNS wewn."],
                     ],
@@ -2728,8 +2728,8 @@
                     t: "Monitor CCTV",
                     c: "#55596a",
                     r: [
-                        ["IP", "10.20.40.2"],
-                        ["VLAN", "VLAN40 · 10.20.40.0/24"],
+                        ["IP", "172.20.40.2"],
+                        ["VLAN", "VLAN40 · 172.20.40.0/24"],
                         ["Dostęp", "VLAN60 i VLAN120 (rules 240, 300)"],
                     ],
                 },
@@ -2738,7 +2738,7 @@
                     c: "#3a7fcc",
                     r: [
                         ["Model", "TP-Link EAP (Omada)"],
-                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["MGMT", "VLAN50 · 172.20.50.0/24"],
                         ["SSID-y", "Home · Guest · Work · IoT"],
                         ["Controller", "Omada LXC109 @ OVH"],
                     ],
@@ -2748,7 +2748,7 @@
                     c: "#3a7fcc",
                     r: [
                         ["Model", "TP-Link EAP (Omada)"],
-                        ["MGMT", "VLAN50 · 10.20.50.0/24"],
+                        ["MGMT", "VLAN50 · 172.20.50.0/24"],
                         ["SSID-y", "Home · Guest · Work · IoT"],
                         ["Uplink", "Switch zarządzalny"],
                     ],
@@ -2757,9 +2757,9 @@
                     t: "SSID Home",
                     c: "#3a7fcc",
                     r: [
-                        ["VLAN", "VLAN120 · 10.20.120.0/24"],
+                        ["VLAN", "VLAN120 · 172.20.120.0/24"],
                         ["Pasmo", "2.4 GHz + 5 GHz"],
-                        ["DNS", "10.19.19.12 + FamilyShield"],
+                        ["DNS", "172.19.19.12 + FamilyShield"],
                         ["Lease", "14400 s"],
                     ],
                 },
@@ -2767,7 +2767,7 @@
                     t: "SSID Guest",
                     c: "#3a7fcc",
                     r: [
-                        ["VLAN", "VLAN100 · 10.20.100.0/24"],
+                        ["VLAN", "VLAN100 · 172.20.100.0/24"],
                         ["DNS", "8.8.8.8 (zewnętrzny)"],
                         ["Izolacja", "Klienci oddzieleni"],
                     ],
@@ -2776,8 +2776,8 @@
                     t: "SSID Work WiFi",
                     c: "#3a7fcc",
                     r: [
-                        ["VLAN", "VLAN110 · 10.20.110.0/24"],
-                        ["DNS", "10.19.19.19 (AdGuard)"],
+                        ["VLAN", "VLAN110 · 172.20.110.0/24"],
+                        ["DNS", "172.19.19.19 (AdGuard)"],
                         ["Pasmo", "5 GHz preferowane"],
                     ],
                 },
@@ -2796,15 +2796,15 @@
                     r: [
                         ["Rola", "Trunk VLAN do VyOS eth0"],
                         ["VLAN trunk", "20,30,40,50,60,70,80,90,100,110,120"],
-                        ["Mgmt", "10.18.18.0/24"],
+                        ["Mgmt", "172.18.18.0/24"],
                     ],
                 },
                 vl30: {
                     t: "VLAN30 — NAS",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.30.0/24"],
-                        ["Urządzenia", "TrueNAS 10.20.30.4"],
+                        ["Sieć", "172.20.30.0/24"],
+                        ["Urządzenia", "TrueNAS 172.20.30.4"],
                         ["Blokada", "Rule 492 inter-VLAN drop"],
                     ],
                 },
@@ -2812,8 +2812,8 @@
                     t: "VLAN40 — CCTV",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.40.0/24"],
-                        ["Host", "10.20.40.2"],
+                        ["Sieć", "172.20.40.0/24"],
+                        ["Host", "172.20.40.2"],
                         ["Blokada", "Rule 493"],
                     ],
                 },
@@ -2821,8 +2821,8 @@
                     t: "VLAN50 — AP Management",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.50.0/24"],
-                        ["Omada", "10.19.19.20 (rule 330)"],
+                        ["Sieć", "172.20.50.0/24"],
+                        ["Omada", "172.19.19.20 (rule 330)"],
                         ["Blokada", "Rule 494"],
                     ],
                 },
@@ -2830,8 +2830,8 @@
                     t: "VLAN60 — Klienci przewodowi",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.60.0/24"],
-                        ["DNS", "10.19.19.12 (AD DC01)"],
+                        ["Sieć", "172.20.60.0/24"],
+                        ["DNS", "172.19.19.12 (AD DC01)"],
                         ["Dostęp", "NAS NetBIOS, Printers, CCTV"],
                     ],
                 },
@@ -2839,15 +2839,15 @@
                     t: "VLAN70 — Drukarki",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.70.0/24"],
-                        ["DNS", "10.19.19.12"],
+                        ["Sieć", "172.20.70.0/24"],
+                        ["DNS", "172.19.19.12"],
                     ],
                 },
                 vl80: {
                     t: "VLAN80 — Praca kabel",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.80.0/24"],
+                        ["Sieć", "172.20.80.0/24"],
                         ["DNS", "OpenDNS 208.67.222.222"],
                         ["Blokada", "Rule 495"],
                     ],
@@ -2856,7 +2856,7 @@
                     t: "VLAN90 — MGMT / Admin",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.20.90.0/24"],
+                        ["Sieć", "172.20.90.0/24"],
                         ["Prawa", "Pełny dostęp (rule 110)"],
                         ["SSH", "Tylko z VLAN90 (rule 30)"],
                     ],
@@ -2865,7 +2865,7 @@
                     t: "MGMT-LAN",
                     c: "#1f9070",
                     r: [
-                        ["Sieć", "10.18.18.0/24"],
+                        ["Sieć", "172.18.18.0/24"],
                         ["Interfejs", "eth0 VyOS"],
                         ["Dostęp", "Pełny (rule 100)"],
                     ],
@@ -2874,8 +2874,8 @@
                     t: "VyOS Router — m625q",
                     c: "#7868e0",
                     r: [
-                        ["LAN", "eth0 · 10.18.18.1/24"],
-                        ["WAN", "eth1 · DHCP 192.168.1.10"],
+                        ["LAN", "eth0 · 172.18.18.1/24"],
+                        ["WAN", "eth1 · DHCP 192.168.1.67"],
                         ["VPN", "WireGuard wg0 · 10.0.2.1/24"],
                         ["Firewall", "forward filter default DROP"],
                         ["NAT", "masquerade → eth1"],
@@ -2887,8 +2887,8 @@
                     c: "#7868e0",
                     r: [
                         ["Interface", "wg0 · 10.0.2.1/24"],
-                        ["Peer", "pve-new @ 203.0.113.10:51820"],
-                        ["Allowed IPs", "10.0.2.2/32 + 10.19.19.0/24"],
+                        ["Peer", "pve-new @ 54.250.250.250:51820"],
+                        ["Allowed IPs", "10.0.2.2/32 + 172.19.19.0/24"],
                         ["Port", "UDP 51820"],
                         ["Keepalive", "25s"],
                     ],
@@ -2900,7 +2900,7 @@
                         ["Default", "DROP (forward + input)"],
                         ["Established", "Accept rule 10"],
                         ["WAN chain", "OUTSIDE-LOCAL"],
-                        ["NAT", "masquerade 10.20.0.0/16"],
+                        ["NAT", "masquerade 172.20.0.0/16"],
                         ["Logging", "Włączone"],
                     ],
                 },
@@ -2908,7 +2908,7 @@
                     t: "WAN — eth1",
                     c: "#7868e0",
                     r: [
-                        ["Adres", "192.168.1.10/24 (DHCP)"],
+                        ["Adres", "192.168.1.67/24 (DHCP)"],
                         ["Upstream", "ISP LTE Router 192.168.1.1"],
                         ["NAT", "masquerade source"],
                         ["WireGuard", "UDP 51820 inbound"],
@@ -2937,7 +2937,7 @@
                     t: "TrueNAS Primary",
                     c: "#c07820",
                     r: [
-                        ["IP", "10.20.30.4"],
+                        ["IP", "172.20.30.4"],
                         ["VLAN", "VLAN30"],
                         ["Usługi", "SMB, NFS, VM Datasets"],
                         ["Replikacja", "→ TrueNAS Replica ZFS"],
@@ -2958,10 +2958,10 @@
                     t: "WireGuard Tunnel → OVH",
                     c: "#7868e0",
                     r: [
-                        ["Peer", "pve-new · 203.0.113.20"],
+                        ["Peer", "pve-new · 185.107.82.43"],
                         ["VyOS", "10.0.2.1"],
                         ["PVE", "10.0.2.2"],
-                        ["Route", "10.19.19.0/24 via wg0"],
+                        ["Route", "172.19.19.0/24 via wg0"],
                     ],
                 },
                 "ovh-fw": {
@@ -2984,14 +2984,14 @@
                         ["Dostęp", "WireGuard 10.0.2.2"],
                         ["VMs", "3 (VM101, VM201, VM202)"],
                         ["LXCs", "12 kontenerów"],
-                        ["Sieć", "10.19.19.0/24"],
+                        ["Sieć", "172.19.19.0/24"],
                     ],
                 },
                 ad: {
                     t: "Active Directory DC — VM201",
                     c: "#3a7fcc",
                     r: [
-                        ["IP", "10.19.19.12"],
+                        ["IP", "172.19.19.12"],
                         ["OS", "Windows Server Core"],
                         ["Rola", "AD DS, DNS port 53"],
                         ["DHCP ref", "DNS primary VLAN60, 70, 120"],
@@ -3018,7 +3018,7 @@
                     t: "AdGuard Home — LXC104",
                     c: "#3a7fcc",
                     r: [
-                        ["IP", "10.19.19.19"],
+                        ["IP", "172.19.19.19"],
                         ["Rola", "DNS sinkhole, blokowanie reklam"],
                         ["Upstream", "1.1.1.1, 8.8.8.8"],
                         ["Używa go", "Większość VLAN-ów"],
@@ -3028,7 +3028,7 @@
                     t: "Omada Controller — LXC109",
                     c: "#3a7fcc",
                     r: [
-                        ["IP", "10.19.19.20"],
+                        ["IP", "172.19.19.20"],
                         ["Rola", "Zarządzanie AP TP-Link"],
                         ["Dostęp", "VLAN50 → rule 330"],
                     ],
@@ -3078,7 +3078,7 @@
                     t: "OpenObserve",
                     c: "#1f9070",
                     r: [
-                        ["IP", "10.19.19.6"],
+                        ["IP", "172.19.19.6"],
                         ["Rola", "Log aggregation"],
                         ["Syslog", "NAS → UDP 514 (rule 261)"],
                     ],
@@ -3122,9 +3122,9 @@
                         ["Cache", "10 000 wpisów"],
                         [
                             "Forwarders",
-                            "1.1.1.1, 8.8.8.8, 10.19.19.12, .19.19",
+                            "1.1.1.1, 8.8.8.8, 172.19.19.12, .19.19",
                         ],
-                        ["Override", "example.dyn-dns.test → 10.19.19.19"],
+                        ["Override", "duckdns.org → 172.19.19.19"],
                     ],
                 },
             };
